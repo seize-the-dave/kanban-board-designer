@@ -7,8 +7,9 @@ public class Board {
     private final List<String> columns = new ArrayList<String>();
 
     public Board() {
-        columns.add("To Do");
-        columns.add("Doing");
+        columns.add("Backlog");
+        columns.add("Ready");
+        columns.add("In Progress");
         columns.add("Done");
     }
 

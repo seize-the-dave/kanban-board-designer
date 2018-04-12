@@ -14,19 +14,44 @@
         border: 1px solid black;
       }
     </style>
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+    <script type="text/javascript">
+        $('#foo').ready(function(){
+            $.ajax({
+                type: "GET",
+                url: "http://localhost:8080/board",
+                dataType: 'json',
+                success: function(data) {
+                    var columns = data['columns'];
+                    var size = 12 / columns.length;
+                    var row = $('<div class="row">').appendTo('#foo');
+                    for (var i = 0; i < columns.length; i++) {
+                        row.append('<div class="col-md-' + size + '">' + columns[i] + '</div>');
+                    }
+                    var row = $('<div class="row h-100">').appendTo('#foo');
+                    for (var i = 0; i < columns.length; i++) {
+                        row.append('<div class="col-md-' + size + '">Card</div>');
+                    }
+
+                }
+            });
+        });
+    </script>
   </head>
   <body>
-    <div class="container-fluid h-100" style="background-color: lightgreen">
-      <div class="row">
-        <div class="col-md-4">To Do</div>
-        <div class="col-md-4">In Progress</div>
-        <div class="col-md-4">Done</div>
-      </div>
-      <div class="row h-100">
-        <div class="col-md-4">Card</div>
-        <div class="col-md-4">Card</div>
-        <div class="col-md-4">Card</div>
-      </div>
+    <div class="container-fluid h-100" id="foo" style="background-color: lightgreen">
+      <!--<div class="row">-->
+        <!--<div class="col-md-4">To Do</div>-->
+        <!--<div class="col-md-4">In Progress</div>-->
+        <!--<div class="col-md-4">Done</div>-->
+      <!--</div>-->
+      <!--<div class="row h-100">-->
+        <!--<div class="col-md-4">Card</div>-->
+        <!--<div class="col-md-4">Card</div>-->
+        <!--<div class="col-md-4">Card</div>-->
+      <!--</div>-->
     </div>
   </body>
 </html>
