@@ -35,7 +35,7 @@ module.exports.create = (event, context, callback) => {
     callback(null, {
       statusCode: 201,
       headers: {
-        'Access-Control-Allow-Origin': 'https://frosty-wiles-e2aeb5.netlify.com',
+        'Access-Control-Allow-Origin': '*',
         Location: '/board?board=' + id
       }
     });
@@ -63,7 +63,7 @@ module.exports.read = (event, context, callback) => {
     callback(null, {
       statusCode: 200,
       headers: {
-        'Access-Control-Allow-Origin': 'https://frosty-wiles-e2aeb5.netlify.com',
+        'Access-Control-Allow-Origin': '*',
       },
       body: JSON.stringify(data.Item),
     })
