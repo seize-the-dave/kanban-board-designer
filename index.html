@@ -32,10 +32,11 @@
               url: boardUrl,
               data: JSON.stringify(board),
               dataType: 'json',
-            }).done(function(data, textStatus, jqXHR) {
-              alert(jqXHR.getResponseHeader("Location"));
-            }).fail(function() {
-              alert("Fail");
+              statusCode: {
+                201: function(data, textStatus, jqXHR) {
+                  alert(jqXHR.getResponseHeader("Location"));
+                }
+              }
             });
             $.ajax({
                 type: "GET",
