@@ -21,7 +21,7 @@
         $('#foo').ready(function(){
             $.ajax({
                 type: "GET",
-                url: "/.functions/board",
+                url: "/.netlify/functions/board",
                 dataType: 'json',
                 success: function(data) {
                     var columns = data['columns'];
