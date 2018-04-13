@@ -1,0 +1,23 @@
+{
+  "name": "kanban-board-designer",
+  "version": "1.0.0",
+  "description": "Kanban Board Designer",
+  "main": "index.js",
+  "dependencies": {
+    "netlify-lambda": "^0.3.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/seize-the-dave/kanban-board-designer.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/seize-the-dave/kanban-board-designer/issues"
+  },
+  "homepage": "https://github.com/seize-the-dave/kanban-board-designer#readme"
+}
