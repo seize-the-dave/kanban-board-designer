@@ -151,7 +151,7 @@
           console.log(jqXHR);
           console.log(jqXHR.getResponseHeader("location"));
           console.log(url.protocol + '//' + url.host + jqXHR.getResponseHeader("location"));
-          window.boardId = new URL(url.protocol + '//' + url.host + jqXHR.getResponseHeader("location")).searchParams.get("board");
+          window.boardId = new URL('https://' + url.host + jqXHR.getResponseHeader("location")).searchParams.get("board");
 
           history.pushState({}, "Board", '?board=' + window.boardId);
           $.ajax({
