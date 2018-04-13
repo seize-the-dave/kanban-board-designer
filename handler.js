@@ -36,7 +36,7 @@ module.exports.create = (event, context, callback) => {
       statusCode: 201,
       headers: {
         'Access-Control-Allow-Origin': '*',
-        'Access-Control-Expose-Headers': 'Location'
+        'Access-Control-Expose-Headers': 'Location',
         'Location': '/board?board=' + id
       }
     });
