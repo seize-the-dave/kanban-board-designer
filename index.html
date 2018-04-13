@@ -8,18 +8,36 @@
     <link href="css/bootstrap.min.css" rel="stylesheet">
     <style type="text/css">
       html, body {
-        /* height: 100%; */
+        margin: 0.5em;
       }
-      div {
+      /* div {
         border: 0.01em solid black;
+      } */
+      div.board-header {
+        border-bottom: 3px solid black;
+        border-right: 3px solid black;
+        font-family: 'Permanent Marker', cursive;
+        text-align: center;
+        padding-bottom: 0.5em;
+      }
+      div.board-header a {
+        color: black;
+      }
+      div.board-body {
+        border-right: 3px solid black;
+      }
+      div:last-child {
+        border-right: 0px;
       }
       div.card {
-        background-color: lightyellow;
-        height: 4em;
-        width: 4em;
-        margin: 1em;
+        background-color: #fff100;
+        /* height: 4em; */
+        width: 60%;
+        padding-top: 60%;
+        margin: 1em auto;
       }
     </style>
+    <link href="https://fonts.googleapis.com/css?family=Permanent+Marker" rel="stylesheet">
     <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
@@ -28,12 +46,12 @@
         var board = {
           "board": {
             "columns": [
-              {name: "To Do", wip: 1},
-              {name: "Ready", wip: 3},
-              {name: "In Development", wip: 5},
-              {name: "Development Done", wip: 3},
-              {name: "Validation", wip: 4},
-              {name: "Done", wip: 3}
+              {name: "To Do", maxWip: 1},
+              {name: "Ready", maxWip: 3},
+              {name: "In Development", maxWip: 5},
+              {name: "Development Done", maxWip: 3},
+              {name: "Validation", maxWip: 4},
+              {name: "Done", maxWip: 3}
             ]
           }
         };
@@ -49,8 +67,23 @@
           }).done(render);
         }
 
-        var changeWip = function(offset, wip) {
-          window.board.board.columns[offset].wip = window.prompt('Change WIP', wip);
+        var changeMaxWip = function(offset, wip) {
+          window.board.board.columns[offset].maxWip = window.prompt('Change Maxiumum WIP', wip);
+          $.ajax({
+            type: "PUT",
+            url: lambdaUrl + "?board=" + window.boardId,
+            data: JSON.stringify(window.board),
+            dataType: 'text',
+          }).done(render);
+        }
+
+        var swapColumn = function(from, to) {
+          var fromCol = window.board.board.columns[from];
+          var toCol = window.board.board.columns[to];
+
+          window.board.board.columns[from] = toCol;
+          window.board.board.columns[to] = fromCol;
+
           $.ajax({
             type: "PUT",
             url: lambdaUrl + "?board=" + window.boardId,
@@ -66,11 +99,24 @@
           $('#board').empty();
           var row = $('<div class="row">').appendTo('#board');
           for (var i = 0; i < columns.length; i++) {
-              row.append('<div class="col-md-' + size + '"><a href="#" onclick="renameColumn(' + i + ', \'' + columns[i].name + '\');">' + columns[i].name + '</a> (<a href="#" onclick="changeWip(' + i + ', \'' + columns[i].wip + '\');">' + columns[i].wip + ')</a><br/><button onclick="addColumn(' + i + ');">&lt;-</button> <button onclick="delColumn(' + i + ');">-</button> <button onclick="addColumn(' + (i + 1) + ');">-&gt;</button></div>');
+              var header = $('<div class="board-header col-lg">').appendTo(row);
+              header.append('<a href="#" onclick="renameColumn(' + i + ', \'' + columns[i].name + '\');">' + columns[i].name + '</a>');
+              header.append('<br/>');
+              header.append('(<a href="#" onclick="changeMaxWip(' + i + ', \'' + columns[i].maxWip + '\');">' + columns[i].maxWip + '</a>)');
+              header.append('<br/>');
+              if (i != 0) {
+                  header.append('<button onclick="swapColumn(' + i + ', ' + (i - 1) + ');">&lt;</button>');
+              }
+              header.append('<button onclick="addColumn(' + i + ');">+</button>');
+              header.append('<button onclick="delColumn(' + i + ');">-</button>');
+              header.append('<button onclick="addColumn(' + (i + 1) + ');">+</button>');
+              if (i < (columns.length - 1)) {
+                  header.append('<button onclick="swapColumn(' + i + ', ' + (i + 1) + ');">&gt;</button>');
+              }
           }
           var row = $('<div class="row h-100">').appendTo('#board');
           for (var i = 0; i < columns.length; i++) {
-              row.append('<div class="col-md-' + size + '"><div class="card"></div> <div class="card"></div> <div class="card"></div></div>');
+              row.append('<div class="board-body col-lg"><div class="card"></div> <div class="card"></div> <div class="card"></div></div>');
           }
         }
 
@@ -85,7 +131,7 @@
         }
 
         var addColumn = function(offset) {
-          window.board.board.columns.splice(offset, 0, {name: "New Column", wip: 1});
+          window.board.board.columns.splice(offset, 0, {name: "New Column", maxWip: 1});
           $.ajax({
             type: "PUT",
             url: lambdaUrl + "?board=" + window.boardId,
