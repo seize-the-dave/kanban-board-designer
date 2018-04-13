@@ -32,7 +32,22 @@
             ]
           }
         };
+        var boardId;
+
+        var addColumn = function() {
+          board = window.board;
+          var columnName = window.prompt('Column Name');
+          board.columns.push(columnName);
+          $.ajax({
+            type: "PUT",
+            url: lambdaUrl + "?board=" + window.boardId,
+            data: JSON.stringify(board),
+            dataType: 'json',
+          }).done(createBoard);
+        }
         var render = function(board) {
+          window.board = board;
+
           var columns = board['columns'];
           var size = Math.floor(12 / columns.length);
           var row = $('<div class="row">').appendTo('#board');
@@ -49,6 +64,18 @@
         };
         var createBoard = function(data, textStatus, jqXHR) {
           var url = new URL(window.location);
+          window.boardId = new URL(url.host + jqXHR.getResponseHeader("location")).searchParams.get("board");
+
+          history.pushState({}, "Board", '?board=' + window.boardId);
+          $.ajax({
+              type: "GET",
+              url: lambdaUrl + "?board=" + window.boardId,
+              dataType: 'json',
+          }).done(renderBoard);
+        };
+
+        var updateBoard = function(data, textStatus, jqXHR) {
+          var url = new URL(window.location);
           var boardId = new URL(url.host + jqXHR.getResponseHeader("location")).searchParams.get("board");
 
           history.pushState({}, "Board", '?board=' + boardId);
@@ -61,8 +88,8 @@
 
         $('#board').ready(function(){
           var url = new URL(window.location);
-          var boardId = url.searchParams.get("board");
-          if (boardId == null) {
+          window.boardId = url.searchParams.get("board");
+          if (window.boardId == null) {
             $.ajax({
               type: "POST",
               url: lambdaUrl,
@@ -72,7 +99,7 @@
           } else {
             $.ajax({
                 type: "GET",
-                url: lambdaUrl + "?board=" + boardId,
+                url: lambdaUrl + "?board=" + window.boardId,
                 dataType: 'json',
             }).done(renderBoard);
           }
@@ -83,5 +110,6 @@
     <div class="container-fluid h-100" id="board">
 
     </div>
+    <button onclick="addColumn();">Add Column</button>
   </body>
 </html>

@@ -66,18 +66,21 @@ functions:
       - http:
           path: /board
           method: post
+          cors: true
   read:
     handler: handler.read
     events:
       - http:
           path: /board
           method: get
+          cors: true
   update:
     handler: handler.update
     events:
       - http:
           path: /board
           method: put
+          cors: true
 
 #    The following are a few example events you can configure
 #    NOTE: Please make sure to change your handler code to work with those events
