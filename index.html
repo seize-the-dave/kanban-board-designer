@@ -19,22 +19,18 @@
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
     <script type="text/javascript">
         var boardUrl = "https://euq9lhwui2.execute-api.us-east-1.amazonaws.com/dev/board";
+        var board = {
+          "board": {
+            "columns": [
+              "To Do", "Ready", "In Progress", "Done"
+            ]
+          }
+        };
         $('#foo').ready(function(){
             $.ajax({
               type: "POST",
               url: boardUrl,
-              data: {
-                "board": {
-                  "columns": [
-                    "To Do",
-                    "Ready",
-                    "In Development",
-                    "Develoment Done",
-                    "In Testing",
-                    "Done"
-                  ]
-                }
-              },
+              data: JSON.stringify(board),
               dataType: 'json',
               success: function(data) {
                 window.alert(data);
