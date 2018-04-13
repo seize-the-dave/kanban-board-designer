@@ -31,12 +31,10 @@
               type: "POST",
               url: boardUrl,
               data: JSON.stringify(board),
-              dataType: 'json',
+              dataType: 'text',
               statusCode: {
                 201: function(data, textStatus, jqXHR) {
-                  alert(data);
-                  alert(textStatus);
-                  alert(jqXHR);
+                  alert(jqXHR.getResponseHeader("location"));
                 }
               }
             });
