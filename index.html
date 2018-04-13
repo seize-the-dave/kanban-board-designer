@@ -32,9 +32,8 @@
               url: boardUrl,
               data: JSON.stringify(board),
               dataType: 'json',
-              success: function(data) {
-                window.alert(data);
-              }
+            }).done(function(data, textStatus, jqXHR) {
+              alert(data.getResponseHeader("Location"));
             });
             $.ajax({
                 type: "GET",
