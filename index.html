@@ -146,6 +146,8 @@
         };
         var boardCreated = function(data, textStatus, jqXHR) {
           var url = new URL(window.location);
+          console.log(url);
+          console.log(jqXHR);
           window.boardId = new URL(url.host + jqXHR.getResponseHeader("location")).searchParams.get("board");
 
           history.pushState({}, "Board", '?board=' + window.boardId);
