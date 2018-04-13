@@ -27,3 +27,4 @@ target
 .idea
 lambda/
 node_modules/
+.serverless

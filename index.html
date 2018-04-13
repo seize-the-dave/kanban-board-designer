@@ -21,10 +21,10 @@
         $('#foo').ready(function(){
             $.ajax({
                 type: "GET",
-                url: "/.netlify/functions/board",
+                url: "https://euq9lhwui2.execute-api.us-east-1.amazonaws.com/dev/board?board=71b67ca8-03dd-427f-bf85-a2d92d8cb9cc",
                 dataType: 'json',
                 success: function(data) {
-                    var columns = data['columns'];
+                    var columns = data['board']['columns'];
                     var size = Math.floor(12 / columns.length);
                     var row = $('<div class="row">').appendTo('#foo');
                     for (var i = 0; i < columns.length; i++) {
