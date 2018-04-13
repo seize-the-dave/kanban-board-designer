@@ -15,8 +15,8 @@
       }
       div.card {
         background-color: lightyellow;
-        height: 8em;
-        width: 8em;
+        height: 4em;
+        width: 4em;
         margin: 1em;
       }
     </style>
@@ -28,41 +28,77 @@
         var board = {
           "board": {
             "columns": [
-              "To Do", "Ready", "In Development", "Development Done", "Validation", "Done"
+              {name: "To Do", wip: 1},
+              {name: "Ready", wip: 3},
+              {name: "In Development", wip: 5},
+              {name: "Development Done", wip: 3},
+              {name: "Validation", wip: 4},
+              {name: "Done", wip: 3}
             ]
           }
         };
         var boardId;
 
-        var addColumn = function() {
-          board = window.board;
-          var columnName = window.prompt('Column Name');
-          board.columns.push(columnName);
+        var renameColumn = function(offset, name) {
+          window.board.board.columns[offset].name = window.prompt('Rename Column', name);
           $.ajax({
             type: "PUT",
             url: lambdaUrl + "?board=" + window.boardId,
-            data: JSON.stringify(board),
-            dataType: 'json',
-          }).done(createBoard);
+            data: JSON.stringify(window.board),
+            dataType: 'text',
+          }).done(render);
         }
-        var render = function(board) {
-          window.board = board;
 
-          var columns = board['columns'];
+        var changeWip = function(offset, wip) {
+          window.board.board.columns[offset].wip = window.prompt('Change WIP', wip);
+          $.ajax({
+            type: "PUT",
+            url: lambdaUrl + "?board=" + window.boardId,
+            data: JSON.stringify(window.board),
+            dataType: 'text',
+          }).done(render);
+        }
+
+        var render = function() {
+          var columns = window.board['board']['columns'];
           var size = Math.floor(12 / columns.length);
+
+          $('#board').empty();
           var row = $('<div class="row">').appendTo('#board');
           for (var i = 0; i < columns.length; i++) {
-              row.append('<div class="col-md-' + size + '">' + columns[i] + '</div>');
+              row.append('<div class="col-md-' + size + '"><a href="#" onclick="renameColumn(' + i + ', \'' + columns[i].name + '\');">' + columns[i].name + '</a> (<a href="#" onclick="changeWip(' + i + ', \'' + columns[i].wip + '\');">' + columns[i].wip + ')</a><br/><button onclick="addColumn(' + i + ');">&lt;-</button> <button onclick="delColumn(' + i + ');">-</button> <button onclick="addColumn(' + (i + 1) + ');">-&gt;</button></div>');
           }
           var row = $('<div class="row h-100">').appendTo('#board');
           for (var i = 0; i < columns.length; i++) {
               row.append('<div class="col-md-' + size + '"><div class="card"></div> <div class="card"></div> <div class="card"></div></div>');
           }
         }
+
+        var delColumn = function(offset) {
+          window.board.board.columns.splice(offset, 1);
+          $.ajax({
+            type: "PUT",
+            url: lambdaUrl + "?board=" + window.boardId,
+            data: JSON.stringify(window.board),
+            dataType: 'text',
+          }).done(render);
+        }
+
+        var addColumn = function(offset) {
+          window.board.board.columns.splice(offset, 0, {name: "New Column", wip: 1});
+          $.ajax({
+            type: "PUT",
+            url: lambdaUrl + "?board=" + window.boardId,
+            data: JSON.stringify(window.board),
+            dataType: 'text',
+          }).done(render);
+        }
+
         var renderBoard = function(data) {
-          render(data["board"]);
+          window.board = data;
+          render();
         };
-        var createBoard = function(data, textStatus, jqXHR) {
+        var boardCreated = function(data, textStatus, jqXHR) {
           var url = new URL(window.location);
           window.boardId = new URL(url.host + jqXHR.getResponseHeader("location")).searchParams.get("board");
 
@@ -93,9 +129,9 @@
             $.ajax({
               type: "POST",
               url: lambdaUrl,
-              data: JSON.stringify(board),
+              data: JSON.stringify(window.board),
               dataType: 'text',
-            }).done(createBoard);
+            }).done(boardCreated);
           } else {
             $.ajax({
                 type: "GET",
@@ -110,6 +146,5 @@
     <div class="container-fluid h-100" id="board">
 
     </div>
-    <button onclick="addColumn();">Add Column</button>
   </body>
 </html>
