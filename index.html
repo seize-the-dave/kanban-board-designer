@@ -8,69 +8,80 @@
     <link href="css/bootstrap.min.css" rel="stylesheet">
     <style type="text/css">
       html, body {
-        height: 100%;
+        /* height: 100%; */
       }
       div {
-        border: 1px solid black;
+        border: 0.01em solid black;
+      }
+      div.card {
+        background-color: lightyellow;
+        height: 8em;
+        width: 8em;
+        margin: 1em;
       }
     </style>
     <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
     <script type="text/javascript">
-        var boardUrl = "https://euq9lhwui2.execute-api.us-east-1.amazonaws.com/dev/board";
+        var lambdaUrl = "https://euq9lhwui2.execute-api.us-east-1.amazonaws.com/dev/board";
         var board = {
           "board": {
             "columns": [
-              "To Do", "Ready", "In Progress", "Done"
+              "To Do", "Ready", "In Development", "Development Done", "Validation", "Done"
             ]
           }
         };
-        $('#foo').ready(function(){
+        var render = function(board) {
+          var columns = board['columns'];
+          var size = Math.floor(12 / columns.length);
+          var row = $('<div class="row">').appendTo('#board');
+          for (var i = 0; i < columns.length; i++) {
+              row.append('<div class="col-md-' + size + '">' + columns[i] + '</div>');
+          }
+          var row = $('<div class="row h-100">').appendTo('#board');
+          for (var i = 0; i < columns.length; i++) {
+              row.append('<div class="col-md-' + size + '"><div class="card"></div> <div class="card"></div> <div class="card"></div></div>');
+          }
+        }
+        var renderBoard = function(data) {
+          render(data["board"]);
+        };
+        var createBoard = function(data, textStatus, jqXHR) {
+          var url = new URL(window.location);
+          var boardId = new URL(url.host + jqXHR.getResponseHeader("location")).searchParams.get("board");
+
+          history.pushState({}, "Board", '?board=' + boardId);
+          $.ajax({
+              type: "GET",
+              url: lambdaUrl + "?board=" + boardId,
+              dataType: 'json',
+          }).done(renderBoard);
+        };
+
+        $('#board').ready(function(){
+          var url = new URL(window.location);
+          var boardId = url.searchParams.get("board");
+          if (boardId == null) {
             $.ajax({
               type: "POST",
-              url: boardUrl,
+              url: lambdaUrl,
               data: JSON.stringify(board),
               dataType: 'text',
-              statusCode: {
-                201: function(data, textStatus, jqXHR) {
-                  alert(jqXHR.getResponseHeader("location"));
-                }
-              }
-            });
+            }).done(createBoard);
+          } else {
             $.ajax({
                 type: "GET",
-                url: boardUrl + "?board=71b67ca8-03dd-427f-bf85-a2d92d8cb9cc",
+                url: lambdaUrl + "?board=" + boardId,
                 dataType: 'json',
-                success: function(data) {
-                    var columns = data['board']['columns'];
-                    var size = Math.floor(12 / columns.length);
-                    var row = $('<div class="row">').appendTo('#foo');
-                    for (var i = 0; i < columns.length; i++) {
-                        row.append('<div class="col-md-' + size + '">' + columns[i] + '</div>');
-                    }
-                    var row = $('<div class="row h-100">').appendTo('#foo');
-                    for (var i = 0; i < columns.length; i++) {
-                        row.append('<div class="col-md-' + size + '">Card</div>');
-                    }
-
-                }
-            });
+            }).done(renderBoard);
+          }
         });
     </script>
   </head>
   <body>
-    <div class="container-fluid h-100" id="foo" style="background-color: lightgreen">
-      <!--<div class="row">-->
-        <!--<div class="col-md-4">To Do</div>-->
-        <!--<div class="col-md-4">In Progress</div>-->
-        <!--<div class="col-md-4">Done</div>-->
-      <!--</div>-->
-      <!--<div class="row h-100">-->
-        <!--<div class="col-md-4">Card</div>-->
-        <!--<div class="col-md-4">Card</div>-->
-        <!--<div class="col-md-4">Card</div>-->
-      <!--</div>-->
+    <div class="container-fluid h-100" id="board">
+
     </div>
   </body>
 </html>

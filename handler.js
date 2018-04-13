@@ -43,6 +43,28 @@ module.exports.create = (event, context, callback) => {
   });
 };
 
+module.exports.update = (event, context, callback) => {
+  var docClient = new AWS.DynamoDB.DocumentClient();
+
+  var params = JSON.parse(event.body);
+  var Item = {
+    id: event.queryStringParameters.board,
+    board: params.board
+  };
+  docClient.put({TableName: 'kanbanboarddesigner', Item: Item}, (error) => {
+    if (error) {
+      callback(error);
+    }
+
+    callback(null, {
+      statusCode: 200,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+      }
+    });
+  });
+};
+
 module.exports.read = (event, context, callback) => {
   var docClient = new AWS.DynamoDB.DocumentClient();
 
