@@ -8,47 +8,66 @@
     <link href="css/bootstrap.min.css" rel="stylesheet">
     <style type="text/css">
       html, body {
-        margin: 0.5em;
+        margin: 0em;
       }
       /* div {
         border: 0.01em solid black;
       } */
-      div.board-header {
+      thead th {
         border-bottom: 3px solid black;
         border-right: 3px solid black;
         font-family: 'Permanent Marker', cursive;
         text-align: center;
         padding-bottom: 0.5em;
       }
-      div.board-header a {
+      thead th a {
         color: black;
       }
-      div.board-body {
+      tbody td {
         border-right: 3px solid black;
       }
-      div:last-child {
+      tr *:last-child {
         border-right: 0px;
       }
       div.card {
-        background-color: #fff100;
-        /* height: 4em; */
         width: 60%;
         padding-top: 60%;
         margin: 1em auto;
       }
-      div.column-1 {
+      div.card-blue {
+        background-color: rgb(0, 155, 210);
+      }
+      div.card-yellow {
+        background-color: #fff100;
+      }
+      div.card-green {
+        background-color: rgb(220, 239, 78);
+      }
+      div.card-orange {
+        background-color: rgb(254, 171, 39);
+      }
+      div.card-green {
+        background-color: rgb(220, 239, 78);
+      }
+      div.card-pink {
+        background-color: rgb(255, 90, 180);
+        width: 60%;
+        padding-top: 60%;
+        margin: 1em auto;
+      }
+      .column-1 {
         width: 160px;
         padding: 0.5em;
       }
-      div.column-2 {
+      .column-2 {
         width: 320px;
         padding: 0.5em;
       }
-      div.column-3 {
+      .column-3 {
         width: 480px;
         padding: 0.5em;
       }
-      div.column-4 {
+      .column-4 {
         width: 640px;
         padding: 0.5em;
       }
@@ -157,54 +176,70 @@
           save(window.board);
         }
 
+        var renderHeader = function(tableHeader, columns) {
+          var tableHeaderRow = $('<tr>').appendTo(tableHeader);
+          var subColumns = [];
+          for (var i = 0; i < columns.length; i++) {
+              var column = columns[i];
+              var span = 1;
+              if (column.columns) {
+                  span = column.columns.length;
+                  subColumns = subColumns.concat(column.columns);
+              } else {
+                  subColumns.push(undefined)
+              }
+
+              var tableHeaderCell = writeTableHeader(tableHeaderRow, Math.max(1, span));
+              writeColumnName(tableHeaderCell, column, [i], columns.length);
+          }
+
+          subcolumnsExist = subColumns.filter(col => col !== undefined).length;
+
+          if (subcolumnsExist) {
+            var tableHeaderRow = $('<tr>').appendTo(tableHeader);
+
+            for (var i = 0; i < columns.length; i++) {
+              if (columns[i].columns && columns[i].columns.length) {
+                var subColumns = columns[i].columns;
+                for (var j = 0; j < subColumns.length; j++) {
+                  var subcolumn = subColumns[j];
+                  var tableHeaderCell = writeTableHeader(tableHeaderRow, 1);
+                  writeColumnName(tableHeaderCell, subcolumn, [i, j], subColumns.length);
+                }
+              } else {
+                writeTableHeader(tableHeaderRow, 1);
+              }
+            }
+          }
+        }
+
         var render = function(board) {
           var columns = board['board']['columns'];
           var size = Math.floor(12 / columns.length);
 
           $('#board').empty();
-          var row = $('<div class="row">').appendTo('#board');
+          var table = $('<table>').appendTo('#board');
+          var tableHeader = $('<thead>').appendTo(table);
 
-          var subcolumnsExist = false;
+          renderHeader(tableHeader, columns);
+
+          var tableBody = $('<tbody>').appendTo(table);
+          var tableBodyRow = $('<tr>').appendTo(tableBody);
 
           for (var i = 0; i < columns.length; i++) {
               var column = columns[i];
-              var span = 1;
-              if (column['columns']) {
-                  span = column.columns.length;
-                  subcolumnsExist = true;
-              }
-
-              var header = writeHeader(row, span);
-              writeColumnName(header, column, [i], columns.length);
-          }
-          if (subcolumnsExist) {
-            row = $('<div class="row">').appendTo('#board');
-
-            for (var i = 0; i < columns.length; i++) {
-              if (columns[i].columns) {
-                var subColumns = columns[i].columns;
-                for (var j = 0; j < subColumns.length; j++) {
-                  var header = writeHeader(row, 1);
-                  var subcolumn = subColumns[j];
-                  writeColumnName(header, subcolumn, [i, j], subColumns.length);
-                }
-              } else {
-                var header = writeHeader(row, 1);
-              }
-            }
-          }
-
-          row = $('<div class="row h-100">').appendTo('#board');
-          for (var i = 0; i < columns.length; i++) {
-              var column = columns[i];
-              if (column.columns) {
+              if (column.columns && column.columns.length) {
                 for (var j = 0; j < column.columns.length; j++) {
-                  cardColumn(row);
+                  cardColumn(tableBodyRow);
                 }
               } else {
-                cardColumn(row);
+                cardColumn(tableBodyRow);
               }
           }
+        }
+
+        var writeTableHeader = function(tableHeaderRow, span) {
+          return $('<th colspan="' + span + '">').appendTo(tableHeaderRow);
         }
 
         var writeHeader = function(row, span) {
@@ -215,7 +250,7 @@
           return indices.pop();
         }
 
-        var writeColumnName = function(header, column, indices, cols) {
+        var writeColumnName = function(headerCell, column, indices, cols) {
           var thisOffset = findPosition(indices.slice(0));
 
           var rightIndices = indices.slice(0);
@@ -227,10 +262,11 @@
           leftIndices.push(thisOffset - 1);
 
           var indicesString = JSON.stringify(indices);
-          header.append('<a href="#" onclick="renameColumn(' + indicesString + ');">' + column.name + '</a> ');
-          header.append('(<a href="#" onclick="changeMaxWip(' + indicesString + ');">' + column.maxWip + '</a>)');
-          header.append('<br/>');
-          buttons = $('<div class="buttons">').appendTo(header);
+          headerCell.append('<a href="#" onclick="renameColumn(' + indicesString + ');">' + column.name + '</a> ');
+          headerCell.append('(<a href="#" onclick="changeMaxWip(' + indicesString + ');">' + column.maxWip + '</a>)');
+          headerCell.append('<br/>');
+
+          var buttons = $('<div class="buttons">').appendTo(headerCell);
           if (thisOffset !== 0) {
               buttons.append('<button alt="Move Left" onclick="swapColumn(' + indicesString + ',' + JSON.stringify(leftIndices) + ');">&lt;</button>');
           }
@@ -245,8 +281,15 @@
           }
         }
 
-        var cardColumn = function(row) {
-          row.append('<div class="board-body column-1"><div class="card"></div> <div class="card"></div> <div class="card"></div></div>');
+        var cardColumn = function(tableBodyRow) {
+          var tableBodyCell = $('<td>').appendTo(tableBodyRow);
+          var cardBoards = $('<div class="board-body column-1">').appendTo(tableBodyCell);
+          var colours = ['yellow', 'yellow', 'yellow', 'blue', 'pink', 'orange', 'green'];
+
+          for (var i = 0; i < 3; i++) {
+            var randomColour = colours[Math.floor(colours.length * Math.random())];
+            cardBoards.append('<div class="card card-' + randomColour + '">');
+          }
         }
 
         var save = function(board) {
@@ -293,7 +336,7 @@
     </script>
   </head>
   <body>
-    <div class="container-fluid h-100" id="board">
+    <div class="h-100" id="board">
 
     </div>
   </body>
