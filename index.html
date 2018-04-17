@@ -36,6 +36,22 @@
         padding-top: 60%;
         margin: 1em auto;
       }
+      div.column-1 {
+        width: 160px;
+        padding: 0.5em;
+      }
+      div.column-2 {
+        width: 320px;
+        padding: 0.5em;
+      }
+      div.column-3 {
+        width: 480px;
+        padding: 0.5em;
+      }
+      div.column-4 {
+        width: 640px;
+        padding: 0.5em;
+      }
     </style>
     <link href="https://fonts.googleapis.com/css?family=Permanent+Marker" rel="stylesheet">
     <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
@@ -43,13 +59,16 @@
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
     <script type="text/javascript">
         var lambdaUrl = "https://euq9lhwui2.execute-api.us-east-1.amazonaws.com/dev/board";
+
         var board = {
           "board": {
             "columns": [
               {name: "To Do", maxWip: 1},
               {name: "Ready", maxWip: 3},
-              {name: "In Development", maxWip: 5},
-              {name: "Development Done", maxWip: 3},
+              {name: "Development", maxWip: 5, "columns": [
+                {name: "In Progress", maxWip: 3},
+                {name: "Done", maxWip: 3},
+              ]},
               {name: "Validation", maxWip: 4},
               {name: "Done", maxWip: 3}
             ]
@@ -57,138 +76,196 @@
         };
         var boardId;
 
-        var renameColumn = function(offset, name) {
-          window.board.board.columns[offset].name = window.prompt('Rename Column', name);
-          $.ajax({
-            type: "PUT",
-            url: lambdaUrl + "?board=" + window.boardId,
-            data: JSON.stringify(window.board),
-            dataType: 'text',
-          }).done(render);
+        var delColumn = function(indices) {
+          var container = containerForIndices(indices.slice(0, -1));
+          container.columns.splice(indices.pop(), 1);
+
+          // First row and remaining columns
+          if (indices.length !== 0 && container.columns.length === 0) {
+            delete container.columns;
+          }
+
+          save(window.board);
         }
 
-        var changeMaxWip = function(offset, wip) {
-          window.board.board.columns[offset].maxWip = window.prompt('Change Maxiumum WIP', wip);
-          $.ajax({
-            type: "PUT",
-            url: lambdaUrl + "?board=" + window.boardId,
-            data: JSON.stringify(window.board),
-            dataType: 'text',
-          }).done(render);
+        var addColumn = function(indices) {
+          var container = containerForIndices(indices.slice(0, -1));
+          container.columns.splice(indices.pop(), 0, {name: "New Column", maxWip: 1});
+
+          save(window.board);
         }
 
-        var swapColumn = function(from, to) {
-          var fromCol = window.board.board.columns[from];
-          var toCol = window.board.board.columns[to];
-
-          window.board.board.columns[from] = toCol;
-          window.board.board.columns[to] = fromCol;
-
-          $.ajax({
-            type: "PUT",
-            url: lambdaUrl + "?board=" + window.boardId,
-            data: JSON.stringify(window.board),
-            dataType: 'text',
-          }).done(render);
+        var containerForIndices = function(indices) {
+          var container = window.board.board;
+          for (var i = 0; i < indices.length; i++) {
+            container = container.columns[indices[i]];
+          }
+          return container;
         }
 
-        var render = function() {
-          var columns = window.board['board']['columns'];
+        var renameColumn = function(indices) {
+          var container = containerForIndices(indices);
+          container.name = window.prompt('Rename Column', container.name);
+
+          save(window.board);
+        }
+
+        var changeMaxWip = function(indices) {
+          var container = containerForIndices(indices);
+          container.maxWip = window.prompt('Change Maxiumum WIP', container.maxWip);
+
+          save(window.board);
+        }
+
+        var swapColumn = function(fromIndices, toIndices) {
+          var fromColumns = window.board.board.columns;
+          for (var i = 0; i < fromIndices.length - 1; i++) {
+            fromColumns = fromColumns[fromIndices[i]].columns;
+          }
+          var fromIndex = fromIndices.pop();
+
+          var toColumns = window.board.board.columns;
+          for (var i = 0; i < toIndices.length - 1; i++) {
+            toColumns = toColumns[toIndices[i]].columns;
+          }
+          var toIndex = toIndices.pop();
+
+          var fromCol = fromColumns[fromIndex];
+          var toCol = toColumns[toIndex];
+
+          fromColumns[fromIndex] = toCol;
+          toColumns[toIndex] = fromCol;
+
+          save(window.board);
+        }
+
+        var render = function(board) {
+          var columns = board['board']['columns'];
           var size = Math.floor(12 / columns.length);
 
           $('#board').empty();
           var row = $('<div class="row">').appendTo('#board');
+
+          var subcolumnsExist = false;
+
           for (var i = 0; i < columns.length; i++) {
-              var header = $('<div class="board-header col-lg">').appendTo(row);
-              header.append('<a href="#" onclick="renameColumn(' + i + ', \'' + columns[i].name + '\');">' + columns[i].name + '</a>');
-              header.append('<br/>');
-              header.append('(<a href="#" onclick="changeMaxWip(' + i + ', \'' + columns[i].maxWip + '\');">' + columns[i].maxWip + '</a>)');
-              header.append('<br/>');
-              if (i != 0) {
-                  header.append('<button onclick="swapColumn(' + i + ', ' + (i - 1) + ');">&lt;</button>');
+              var column = columns[i];
+              var span = 1;
+              if (column['columns']) {
+                  span = column.columns.length;
+                  subcolumnsExist = true;
               }
-              header.append('<button onclick="addColumn(' + i + ');">+</button>');
-              header.append('<button onclick="delColumn(' + i + ');">-</button>');
-              header.append('<button onclick="addColumn(' + (i + 1) + ');">+</button>');
-              if (i < (columns.length - 1)) {
-                  header.append('<button onclick="swapColumn(' + i + ', ' + (i + 1) + ');">&gt;</button>');
+
+              var header = writeHeader(row, span);
+              writeColumnName(header, column, [i], columns.length);
+          }
+          if (subcolumnsExist) {
+            row = $('<div class="row">').appendTo('#board');
+
+            for (var i = 0; i < columns.length; i++) {
+              if (columns[i].columns) {
+                var subColumns = columns[i].columns;
+                for (var j = 0; j < subColumns.length; j++) {
+                  var header = writeHeader(row, 1);
+                  var subcolumn = subColumns[j];
+                  writeColumnName(header, subcolumn, [i, j], subColumns.length);
+                }
+              } else {
+                var header = writeHeader(row, 1);
+              }
+            }
+          }
+
+          row = $('<div class="row h-100">').appendTo('#board');
+          for (var i = 0; i < columns.length; i++) {
+              var column = columns[i];
+              if (column.columns) {
+                for (var j = 0; j < column.columns.length; j++) {
+                  cardColumn(row);
+                }
+              } else {
+                cardColumn(row);
               }
           }
-          var row = $('<div class="row h-100">').appendTo('#board');
-          for (var i = 0; i < columns.length; i++) {
-              row.append('<div class="board-body col-lg"><div class="card"></div> <div class="card"></div> <div class="card"></div></div>');
+        }
+
+        var writeHeader = function(row, span) {
+          return $('<div class="board-header column-' + span + '">').appendTo(row);
+        }
+
+        var findPosition = function(indices) {
+          return indices.pop();
+        }
+
+        var writeColumnName = function(header, column, indices, cols) {
+          var thisOffset = findPosition(indices.slice(0));
+
+          var rightIndices = indices.slice(0);
+          rightIndices.pop();
+          rightIndices.push(thisOffset + 1);
+
+          var leftIndices = indices.slice(0);
+          leftIndices.pop();
+          leftIndices.push(thisOffset - 1);
+
+          var indicesString = JSON.stringify(indices);
+          header.append('<a href="#" onclick="renameColumn(' + indicesString + ');">' + column.name + '</a> ');
+          header.append('(<a href="#" onclick="changeMaxWip(' + indicesString + ');">' + column.maxWip + '</a>)');
+          header.append('<br/>');
+          if (thisOffset !== 0) {
+              header.append('<button onclick="swapColumn(' + indicesString + ',' + JSON.stringify(leftIndices) + ');">&lt;</button>');
+          }
+          header.append('<button onclick="addColumn(' + indicesString + ');">+</button>');
+          header.append('<button onclick="delColumn(' + indicesString + ');">-</button>');
+          header.append('<button onclick="addColumn(' + JSON.stringify(rightIndices) + ');">+</button>');
+          if (thisOffset < (cols - 1)) {
+              header.append('<button onclick="swapColumn(' + indicesString + ',' + JSON.stringify(rightIndices) + ');">&gt;</button>');
           }
         }
 
-        var delColumn = function(offset) {
-          window.board.board.columns.splice(offset, 1);
-          $.ajax({
-            type: "PUT",
-            url: lambdaUrl + "?board=" + window.boardId,
-            data: JSON.stringify(window.board),
-            dataType: 'text',
-          }).done(render);
+        var cardColumn = function(row) {
+          row.append('<div class="board-body column-1"><div class="card"></div> <div class="card"></div> <div class="card"></div></div>');
         }
 
-        var addColumn = function(offset) {
-          window.board.board.columns.splice(offset, 0, {name: "New Column", maxWip: 1});
+        var save = function(board) {
           $.ajax({
             type: "PUT",
-            url: lambdaUrl + "?board=" + window.boardId,
-            data: JSON.stringify(window.board),
+            url: lambdaUrl + "?board=" + board.id,
+            data: JSON.stringify(board),
             dataType: 'text',
-          }).done(render);
+          }).done(function() {
+            render(board);
+          });
         }
 
-        var renderBoard = function(data) {
-          window.board = data;
-          render();
-        };
-        var boardCreated = function(data, textStatus, jqXHR) {
-          var url = new URL(window.location);
-          // console.log(url);
-          // console.log(url.host);
-          // console.log(jqXHR);
-          // console.log(new URL(jqXHR.getResponseHeader("location"), url));
-          // console.log('http://' + url.host + jqXHR.getResponseHeader("location"));
-          window.boardId = new URL(jqXHR.getResponseHeader("location"), url).searchParams.get("board");
-
-          history.pushState({}, "Board", '?board=' + window.boardId);
-          $.ajax({
-              type: "GET",
-              url: lambdaUrl + "?board=" + window.boardId,
-              dataType: 'json',
-          }).done(renderBoard);
-        };
-
-        var updateBoard = function(data, textStatus, jqXHR) {
-          var url = new URL(window.location);
-          var boardId = new URL(url.host + jqXHR.getResponseHeader("location")).searchParams.get("board");
-
-          history.pushState({}, "Board", '?board=' + boardId);
+        var load = function(boardId) {
           $.ajax({
               type: "GET",
               url: lambdaUrl + "?board=" + boardId,
               dataType: 'json',
-          }).done(renderBoard);
-        };
+          }).done(function(data) {
+            window.board = data;
+            render(window.board);
+          })
+        }
 
         $('#board').ready(function(){
-          var url = new URL(window.location);
-          window.boardId = url.searchParams.get("board");
+          window.boardId = new URL(window.location).searchParams.get("board");
+
           if (window.boardId == null) {
             $.ajax({
               type: "POST",
               url: lambdaUrl,
               data: JSON.stringify(window.board),
               dataType: 'text',
-            }).done(boardCreated);
+            }).done(function(data, textStatus, jqXHR) {
+              window.boardId = new URL(jqXHR.getResponseHeader("location"), new URL(window.location)).searchParams.get("board");
+              history.pushState({}, "Board", '?board=' + window.boardId);
+
+              render(window.board);
+            });
           } else {
-            $.ajax({
-                type: "GET",
-                url: lambdaUrl + "?board=" + window.boardId,
-                dataType: 'json',
-            }).done(renderBoard);
+            load(window.boardId);
           }
         });
     </script>
