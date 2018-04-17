@@ -52,6 +52,10 @@
         width: 640px;
         padding: 0.5em;
       }
+      div.buttons {
+        font-size: 0.5em;
+        padding-top: 0.5em;
+      }
     </style>
     <link href="https://fonts.googleapis.com/css?family=Permanent+Marker" rel="stylesheet">
     <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
@@ -88,9 +92,13 @@
           save(window.board);
         }
 
+        var newColumn = function() {
+          return {name: "New Column", maxWip: 1};
+        }
+
         var addColumn = function(indices) {
           var container = containerForIndices(indices.slice(0, -1));
-          container.columns.splice(indices.pop(), 0, {name: "New Column", maxWip: 1});
+          container.columns.splice(indices.pop(), 0, newColumn());
 
           save(window.board);
         }
@@ -106,6 +114,16 @@
         var renameColumn = function(indices) {
           var container = containerForIndices(indices);
           container.name = window.prompt('Rename Column', container.name);
+
+          save(window.board);
+        }
+
+        var splitColumn = function(indices) {
+          var container = containerForIndices(indices);
+          container.columns = [
+            newColumn(),
+            newColumn()
+          ];
 
           save(window.board);
         }
@@ -212,14 +230,18 @@
           header.append('<a href="#" onclick="renameColumn(' + indicesString + ');">' + column.name + '</a> ');
           header.append('(<a href="#" onclick="changeMaxWip(' + indicesString + ');">' + column.maxWip + '</a>)');
           header.append('<br/>');
+          buttons = $('<div class="buttons">').appendTo(header);
           if (thisOffset !== 0) {
-              header.append('<button onclick="swapColumn(' + indicesString + ',' + JSON.stringify(leftIndices) + ');">&lt;</button>');
+              buttons.append('<button alt="Move Left" onclick="swapColumn(' + indicesString + ',' + JSON.stringify(leftIndices) + ');">&lt;</button>');
           }
-          header.append('<button onclick="addColumn(' + indicesString + ');">+</button>');
-          header.append('<button onclick="delColumn(' + indicesString + ');">-</button>');
-          header.append('<button onclick="addColumn(' + JSON.stringify(rightIndices) + ');">+</button>');
+          buttons.append('<button alt="Add Column to Left" onclick="addColumn(' + indicesString + ');">+</button>');
+          buttons.append('<button alt="Delete Column" onclick="delColumn(' + indicesString + ');">-</button>');
+          if (containerForIndices(indices).columns === undefined) {
+            buttons.append('<button alt="Split into Two" onclick="splitColumn(' + indicesString + ');">||</button>');
+          }
+          buttons.append('<button alt="Add Column to Right"  onclick="addColumn(' + JSON.stringify(rightIndices) + ');">+</button>');
           if (thisOffset < (cols - 1)) {
-              header.append('<button onclick="swapColumn(' + indicesString + ',' + JSON.stringify(rightIndices) + ');">&gt;</button>');
+              buttons.append('<button alt="Move Left" onclick="swapColumn(' + indicesString + ',' + JSON.stringify(rightIndices) + ');">&gt;</button>');
           }
         }
 
