@@ -190,6 +190,8 @@ var fillIn = function(pivot, columns, offset) {
 }
 
 var render = function(board) {
+  $('.tooltip').css('display', 'none');
+  
   var columns = board.board.columns;
   var size = Math.floor(12 / columns.length);
 
