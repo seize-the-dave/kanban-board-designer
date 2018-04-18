@@ -216,16 +216,16 @@ var render = function(board) {
     var swimlaneCell = $('<th class="swimlane" colspan="' + lastRow + '"><a href="#" onclick="renameSwimlane(' + i + ')">' + swimlane.name + '</a>').appendTo(swimlaneRow);
     var swimlaneButtons = $('<br/><div class="btn-group buttons">').appendTo(swimlaneCell);
     if (i === 0) {
-      swimlaneButtons.append('<button class="btn btn-primary btn-sm disabled"><i class="fas fa-hand-point-up"></i></button></div>');
+      swimlaneButtons.append('<button class="btn btn-primary btn-sm disabled" data-toggle="tooltip" title="Move Swimlane Up"><i class="fas fa-arrow-up"></i></button></div>');
     } else {
-      swimlaneButtons.append('<button class="btn btn-primary btn-sm" onclick="swapSwimlanes(' + i + ',' + (i - 1) + ')"><i class="fas fa-hand-point-up"></i></button></div>');
+      swimlaneButtons.append('<button class="btn btn-primary btn-sm" data-toggle="tooltip" title="Move Swimlane Up" onclick="swapSwimlanes(' + i + ',' + (i - 1) + ')"><i class="fas fa-arrow-up"></i></button></div>');
     }
-    swimlaneButtons.append('<button class="btn btn-primary btn-sm" onclick="addSwimlane(' + (i + 1) + ')"><i class="fas fa-plus-circle"></i></button></div>');
-    swimlaneButtons.append('<button class="btn btn-primary btn-sm" alt="Delete Swimlane" onclick="delSwimlane(' + i + ');"><i class="fas fa-trash-alt"></i></button>');
+    swimlaneButtons.append('<button class="btn btn-primary btn-sm" data-toggle="tooltip" title="Add Swimlane" onclick="addSwimlane(' + (i + 1) + ')"><i class="fas fa-plus"></i></button></div>');
+    swimlaneButtons.append('<button class="btn btn-primary btn-sm" data-toggle="tooltip" title="Delete Swimlane" onclick="delSwimlane(' + i + ');"><i class="fas fa-trash-alt"></i></button>');
     if (i === swimlanes.length - 1) {
-      swimlaneButtons.append('<button class="btn btn-primary btn-sm disabled"><i class="fas fa-hand-point-down"></i></button></div>');
+      swimlaneButtons.append('<button class="btn btn-primary btn-sm disabled" data-toggle="tooltip" title="Move Swimlane Down"><i class="fas fa-arrow-down"></i></button></div>');
     } else {
-      swimlaneButtons.append('<button class="btn btn-primary btn-sm" onclick="swapSwimlanes(' + i + ',' + (i + 1) + ')"><i class="fas fa-hand-point-down"></i></button></div>');
+      swimlaneButtons.append('<button class="btn btn-primary btn-sm" data-toggle="tooltip" title="Move Swimlane Down" onclick="swapSwimlanes(' + i + ',' + (i + 1) + ')"><i class="fas fa-arrow-down"></i></button></div>');
     }
     var tableBodyRow = $('<tr>').appendTo(tableBody);
     for (var j = 0; j < lastRow; j++) {
@@ -272,22 +272,21 @@ var renderColumnName = function(headerCell, column, cols) {
 
   var buttons = $('<div class="buttons btn-group" id="' + buttons_id + '">').appendTo(headerCell);
   if (thisOffset !== 0) {
-    buttons.append('<button class="btn btn-primary btn-sm" alt="Move Left" onclick="swapColumn(' + indicesString + ',' + JSON.stringify(leftIndices) + ');"><i class="fas fa-hand-point-left"></i></button>');
+    buttons.append('<button class="btn btn-primary btn-sm" data-toggle="tooltip" title="Move Left" onclick="swapColumn(' + indicesString + ',' + JSON.stringify(leftIndices) + ');"><i class="fas fa-arrow-left"></i></button>');
   } else {
-    buttons.append('<button class="btn btn-primary btn-sm disabled" alt="Move Left"><i class="fas fa-hand-point-left"></i></button>');
+    buttons.append('<button class="btn btn-primary btn-sm disabled" data-toggle="tooltip" title="Move Left"><i class="fas fa-arrow-left"></i></button>');
   }
-  // buttons.append('<button class="btn btn-primary btn-sm" alt="Add Column to Left" onclick="addColumn(' + indicesString + ');"><i class="fas fa-plus-circle"></i></button>');
-  buttons.append('<button class="btn btn-primary btn-sm" alt="Add Column to Right"  onclick="addColumn(' + JSON.stringify(rightIndices) + ');"><i class="fas fa-plus-circle"></i></button>');
+  buttons.append('<button class="btn btn-primary btn-sm" data-toggle="tooltip" title="Add Column"  onclick="addColumn(' + JSON.stringify(rightIndices) + ');"><i class="fas fa-plus"></i></button>');
   if (containerForIndices(indices).columns === undefined) {
-    buttons.append('<button class="btn btn-primary btn-sm" alt="Split into Two" onclick="splitColumn(' + indicesString + ');"><i class="fas fa-columns"></i></button>');
+    buttons.append('<button class="btn btn-primary btn-sm" data-toggle="tooltip" title="Split into Two" onclick="splitColumn(' + indicesString + ');"><i class="fas fa-columns"></i></button>');
   } else {
-    buttons.append('<button class="btn btn-primary btn-sm disabled" alt="Split into Two"><i class="fas fa-columns"></i></button>');
+    buttons.append('<button class="btn btn-primary btn-sm disabled" data-toggle="tooltip" title="Split into Two"><i class="fas fa-columns"></i></button>');
   }
-  buttons.append('<button class="btn btn-primary btn-sm" alt="Delete Column" onclick="delColumn(' + indicesString + ');"><i class="fas fa-trash-alt"></i></button>');
+  buttons.append('<button class="btn btn-primary btn-sm" data-toggle="tooltip" title="Delete Column" onclick="delColumn(' + indicesString + ');"><i class="fas fa-trash-alt"></i></button>');
   if (thisOffset < (cols - 1)) {
-    buttons.append('<button class="btn btn-primary btn-sm" alt="Move Right" onclick="swapColumn(' + indicesString + ',' + JSON.stringify(rightIndices) + ');"><i class="fas fa-hand-point-right"></i></button>');
+    buttons.append('<button class="btn btn-primary btn-sm" data-toggle="tooltip" title="Move Right" onclick="swapColumn(' + indicesString + ',' + JSON.stringify(rightIndices) + ');"><i class="fas fa-arrow-right"></i></button>');
   } else {
-    buttons.append('<button class="btn btn-primary btn-sm disabled" alt="Move Right"><i class="fas fa-hand-point-right"></i></button>');
+    buttons.append('<button class="btn btn-primary btn-sm disabled" data-toggle="tooltip" title="Move Right"><i class="fas fa-arrow-right"></i></button>');
   }
 }
 
@@ -330,6 +329,7 @@ var load = function(boardId) {
 }
 
 $('#board').ready(function(){
+  $("body").tooltip({ selector: '[data-toggle=tooltip]' });
   window.boardId = new URL(window.location).searchParams.get("board");
 
   if (window.boardId == null) {
