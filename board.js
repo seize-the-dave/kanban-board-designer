@@ -185,6 +185,14 @@ var findPosition = function(indices) {
   return indices.pop();
 }
 
+var toggle = function(id) {
+  if ($(id).css('display') == 'none') {
+    $(id).css('display', 'block');
+  } else {
+    $(id).css('display', 'none');
+  }
+}
+
 var renderColumnName = function(headerCell, column, cols) {
   var indices = column.indices;
   var thisOffset = findPosition(indices.slice(0));
@@ -198,22 +206,30 @@ var renderColumnName = function(headerCell, column, cols) {
   leftIndices.push(thisOffset - 1);
 
   var indicesString = JSON.stringify(indices);
+  var buttons_id = 'buttons_' + indices.join('_');
   headerCell.append('<a href="#" onclick="renameColumn(' + indicesString + ');">' + column.name + '</a> ');
-  headerCell.append('(<a href="#" onclick="changeMaxWip(' + indicesString + ');">' + column.maxWip + '</a>)');
+  headerCell.append('(<a href="#" onclick="changeMaxWip(' + indicesString + ');">' + column.maxWip + '</a>) ');
+  // headerCell.append('[<a href="#" onclick="toggle(\'#' + buttons_id + '\');">?</a>]');
   headerCell.append('<br/>');
 
-  var buttons = $('<div class="buttons">').appendTo(headerCell);
+  var buttons = $('<div class="buttons btn-group" id="' + buttons_id + '">').appendTo(headerCell);
   if (thisOffset !== 0) {
-      buttons.append('<button alt="Move Left" onclick="swapColumn(' + indicesString + ',' + JSON.stringify(leftIndices) + ');">&lt;</button>');
+    buttons.append('<button class="btn btn-primary btn-sm" alt="Move Left" onclick="swapColumn(' + indicesString + ',' + JSON.stringify(leftIndices) + ');"><i class="fas fa-hand-point-left"></i></button>');
+  } else {
+    buttons.append('<button class="btn btn-primary btn-sm disabled" alt="Move Left"><i class="fas fa-hand-point-left"></i></button>');
   }
-  buttons.append('<button alt="Add Column to Left" onclick="addColumn(' + indicesString + ');">+</button>');
-  buttons.append('<button alt="Delete Column" onclick="delColumn(' + indicesString + ');">-</button>');
+  buttons.append('<button class="btn btn-primary btn-sm" alt="Add Column to Left" onclick="addColumn(' + indicesString + ');"><i class="fas fa-plus-circle"></i></button>');
+  buttons.append('<button class="btn btn-primary btn-sm" alt="Delete Column" onclick="delColumn(' + indicesString + ');"><i class="fas fa-trash-alt"></i></button>');
   if (containerForIndices(indices).columns === undefined) {
-    buttons.append('<button alt="Split into Two" onclick="splitColumn(' + indicesString + ');">||</button>');
+    buttons.append('<button class="btn btn-primary btn-sm" alt="Split into Two" onclick="splitColumn(' + indicesString + ');"><i class="fas fa-columns"></i></button>');
+  } else {
+    buttons.append('<button class="btn btn-primary btn-sm disabled" alt="Split into Two"><i class="fas fa-columns"></i></button>');
   }
-  buttons.append('<button alt="Add Column to Right"  onclick="addColumn(' + JSON.stringify(rightIndices) + ');">+</button>');
+  buttons.append('<button class="btn btn-primary btn-sm" alt="Add Column to Right"  onclick="addColumn(' + JSON.stringify(rightIndices) + ');"><i class="fas fa-plus-circle"></i></button>');
   if (thisOffset < (cols - 1)) {
-      buttons.append('<button alt="Move Right" onclick="swapColumn(' + indicesString + ',' + JSON.stringify(rightIndices) + ');">&gt;</button>');
+    buttons.append('<button class="btn btn-primary btn-sm" alt="Move Right" onclick="swapColumn(' + indicesString + ',' + JSON.stringify(rightIndices) + ');"><i class="fas fa-hand-point-right"></i></button>');
+  } else {
+    buttons.append('<button class="btn btn-primary btn-sm disabled" alt="Move Right"><i class="fas fa-hand-point-right"></i></button>');
   }
 }
 
@@ -231,13 +247,6 @@ var renderCardColumn = function(tableBodyRow) {
 var renderAdsenseCardColumn = function(tableBodyRow) {
   var tableBodyCell = $('<td>').appendTo(tableBodyRow);
   tableBodyCell.append('<div class="column-1" id="adsense">');
-  // var cardBoards = $('<div class="board-body column-1">').appendTo(tableBodyCell);
-  // var colours = ['yellow', 'yellow', 'yellow', 'blue', 'pink', 'orange', 'green'];
-  //
-  // for (var i = 0; i < 3; i++) {
-  //   var randomColour = colours[Math.floor(colours.length * Math.random())];
-  //   cardBoards.append('<div class="card card-' + randomColour + '">');
-  // }
 }
 
 var save = function(board) {
