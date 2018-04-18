@@ -14,7 +14,7 @@ var board = {
     ],
     "swimlanes": [
       {name: "Expedite", wip: 1},
-      {name: "Standard", wip: 3}
+      {name: "Standard", wip: 4}
     ]
   }
 };
@@ -33,12 +33,28 @@ var delColumn = function(indices) {
 }
 
 var newColumn = function() {
-  return {name: "New Column", maxWip: 1};
+  return {name: window.prompt('Column Name', 'New Column'), maxWip: 1};
 }
 
 var addColumn = function(indices) {
   var container = containerForIndices(indices.slice(0, -1));
   container.columns.splice(indices.pop(), 0, newColumn());
+
+  save(window.board);
+}
+
+var newSwimlane = function() {
+  return {name: window.prompt('Swimlane Name', 'New Swimlane'), wip: 2};
+}
+
+var addSwimlane = function(offset) {
+  window.board.board.swimlanes.splice(offset, 0, newSwimlane());
+
+  save(window.board);
+}
+
+var delSwimlane = function(offset) {
+  window.board.board.swimlanes.splice(offset, 1);
 
   save(window.board);
 }
@@ -204,6 +220,8 @@ var render = function(board) {
     } else {
       swimlaneButtons.append('<button class="btn btn-primary btn-sm" onclick="swapSwimlanes(' + i + ',' + (i - 1) + ')"><i class="fas fa-hand-point-up"></i></button></div>');
     }
+    swimlaneButtons.append('<button class="btn btn-primary btn-sm" onclick="addSwimlane(' + (i + 1) + ')"><i class="fas fa-plus-circle"></i></button></div>');
+    swimlaneButtons.append('<button class="btn btn-primary btn-sm" alt="Delete Swimlane" onclick="delSwimlane(' + i + ');"><i class="fas fa-trash-alt"></i></button>');
     if (i === swimlanes.length - 1) {
       swimlaneButtons.append('<button class="btn btn-primary btn-sm disabled"><i class="fas fa-hand-point-down"></i></button></div>');
     } else {
@@ -258,14 +276,14 @@ var renderColumnName = function(headerCell, column, cols) {
   } else {
     buttons.append('<button class="btn btn-primary btn-sm disabled" alt="Move Left"><i class="fas fa-hand-point-left"></i></button>');
   }
-  buttons.append('<button class="btn btn-primary btn-sm" alt="Add Column to Left" onclick="addColumn(' + indicesString + ');"><i class="fas fa-plus-circle"></i></button>');
-  buttons.append('<button class="btn btn-primary btn-sm" alt="Delete Column" onclick="delColumn(' + indicesString + ');"><i class="fas fa-trash-alt"></i></button>');
+  // buttons.append('<button class="btn btn-primary btn-sm" alt="Add Column to Left" onclick="addColumn(' + indicesString + ');"><i class="fas fa-plus-circle"></i></button>');
+  buttons.append('<button class="btn btn-primary btn-sm" alt="Add Column to Right"  onclick="addColumn(' + JSON.stringify(rightIndices) + ');"><i class="fas fa-plus-circle"></i></button>');
   if (containerForIndices(indices).columns === undefined) {
     buttons.append('<button class="btn btn-primary btn-sm" alt="Split into Two" onclick="splitColumn(' + indicesString + ');"><i class="fas fa-columns"></i></button>');
   } else {
     buttons.append('<button class="btn btn-primary btn-sm disabled" alt="Split into Two"><i class="fas fa-columns"></i></button>');
   }
-  buttons.append('<button class="btn btn-primary btn-sm" alt="Add Column to Right"  onclick="addColumn(' + JSON.stringify(rightIndices) + ');"><i class="fas fa-plus-circle"></i></button>');
+  buttons.append('<button class="btn btn-primary btn-sm" alt="Delete Column" onclick="delColumn(' + indicesString + ');"><i class="fas fa-trash-alt"></i></button>');
   if (thisOffset < (cols - 1)) {
     buttons.append('<button class="btn btn-primary btn-sm" alt="Move Right" onclick="swapColumn(' + indicesString + ',' + JSON.stringify(rightIndices) + ');"><i class="fas fa-hand-point-right"></i></button>');
   } else {
