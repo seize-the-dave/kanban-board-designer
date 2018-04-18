@@ -11,6 +11,10 @@ var board = {
       ]},
       {name: "Validation", maxWip: 4},
       {name: "Done", maxWip: 3}
+    ],
+    "swimlanes": [
+      {name: "Expedite", wip: 1},
+      {name: "Standard", wip: 3}
     ]
   }
 };
@@ -152,7 +156,7 @@ var fillIn = function(pivot, columns, offset) {
 }
 
 var render = function(board) {
-  var columns = board['board']['columns'];
+  var columns = board.board.columns;
   var size = Math.floor(12 / columns.length);
 
   var augmentedBoard = Object.assign(board['board'], {});
@@ -168,13 +172,19 @@ var render = function(board) {
   var tableHeader = $('<thead>').appendTo(table);
   renderHeader(tableHeader, columns, pivot);
 
-  var tableBody = $('<tbody>').appendTo(table);
-  var tableBodyRow = $('<tr>').appendTo(tableBody);
   var lastRow = pivot.pop().length;
-  for (var i = 0; i < lastRow - 1; i++) {
-    renderCardColumn(tableBodyRow);
-  }
-  renderAdsenseCardColumn(tableBodyRow);
+
+  var swimlanes = board.board.swimlanes;
+  var tableBody = $('<tbody>').appendTo(table);
+  swimlanes.forEach(function(swimlane) {
+    var swimlaneRow = $('<tr>').appendTo(tableBody);
+    swimlaneRow.append('<th class="swimlane" colspan="' + lastRow + '">' + swimlane.name + '</th>');
+    var tableBodyRow = $('<tr>').appendTo(tableBody);
+    for (var i = 0; i < lastRow - 1; i++) {
+      renderCardColumn(tableBodyRow, swimlane.wip);
+    }
+    renderAdsenseCardColumn(tableBodyRow);
+  });
 }
 
 var renderTableHeader = function(tableHeaderRow, span) {
@@ -233,12 +243,12 @@ var renderColumnName = function(headerCell, column, cols) {
   }
 }
 
-var renderCardColumn = function(tableBodyRow) {
+var renderCardColumn = function(tableBodyRow, wip) {
   var tableBodyCell = $('<td>').appendTo(tableBodyRow);
   var cardBoards = $('<div class="column-1">').appendTo(tableBodyCell);
   var colours = ['yellow', 'yellow', 'yellow', 'blue', 'pink', 'orange', 'green'];
 
-  for (var i = 0; i < 3; i++) {
+  for (var i = 0; i < wip; i++) {
     var randomColour = colours[Math.floor(colours.length * Math.random())];
     cardBoards.append('<div class="card card-' + randomColour + '">');
   }
