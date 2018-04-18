@@ -171,9 +171,10 @@ var render = function(board) {
   var tableBody = $('<tbody>').appendTo(table);
   var tableBodyRow = $('<tr>').appendTo(tableBody);
   var lastRow = pivot.pop().length;
-  for (var i = 0; i < lastRow; i++) {
+  for (var i = 0; i < lastRow - 1; i++) {
     renderCardColumn(tableBodyRow);
   }
+  renderAdsenseCardColumn(tableBodyRow);
 }
 
 var renderTableHeader = function(tableHeaderRow, span) {
@@ -218,13 +219,25 @@ var renderColumnName = function(headerCell, column, cols) {
 
 var renderCardColumn = function(tableBodyRow) {
   var tableBodyCell = $('<td>').appendTo(tableBodyRow);
-  var cardBoards = $('<div class="board-body column-1">').appendTo(tableBodyCell);
+  var cardBoards = $('<div class="column-1">').appendTo(tableBodyCell);
   var colours = ['yellow', 'yellow', 'yellow', 'blue', 'pink', 'orange', 'green'];
 
   for (var i = 0; i < 3; i++) {
     var randomColour = colours[Math.floor(colours.length * Math.random())];
     cardBoards.append('<div class="card card-' + randomColour + '">');
   }
+}
+
+var renderAdsenseCardColumn = function(tableBodyRow) {
+  var tableBodyCell = $('<td>').appendTo(tableBodyRow);
+  tableBodyCell.append('<div class="column-1" id="adsense">');
+  // var cardBoards = $('<div class="board-body column-1">').appendTo(tableBodyCell);
+  // var colours = ['yellow', 'yellow', 'yellow', 'blue', 'pink', 'orange', 'green'];
+  //
+  // for (var i = 0; i < 3; i++) {
+  //   var randomColour = colours[Math.floor(colours.length * Math.random())];
+  //   cardBoards.append('<div class="card card-' + randomColour + '">');
+  // }
 }
 
 var save = function(board) {
