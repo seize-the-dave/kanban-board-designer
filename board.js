@@ -66,6 +66,16 @@ var renameSwimlane = function(offset) {
   save(window.board);
 }
 
+var swapSwimlanes = function(from, to) {
+  var swimlaneFrom = window.board.board.swimlanes[from];
+  var swimlaneTo = window.board.board.swimlanes[to];
+
+  window.board.board.swimlanes[to] = swimlaneFrom;
+  window.board.board.swimlanes[from] = swimlaneTo;
+
+  save(window.board);
+}
+
 var splitColumn = function(indices) {
   var container = containerForIndices(indices);
   container.columns = [
@@ -187,7 +197,18 @@ var render = function(board) {
   for (var i = 0; i < swimlanes.length; i++) {
     var swimlane = swimlanes[i];
     var swimlaneRow = $('<tr>').appendTo(tableBody);
-    swimlaneRow.append('<th class="swimlane" colspan="' + lastRow + '"><a href="#" onclick="renameSwimlane(' + i + ')">' + swimlane.name + '</a></th>');
+    var swimlaneCell = $('<th class="swimlane" colspan="' + lastRow + '"><a href="#" onclick="renameSwimlane(' + i + ')">' + swimlane.name + '</a>').appendTo(swimlaneRow);
+    var swimlaneButtons = $('<br/><div class="btn-group buttons">').appendTo(swimlaneCell);
+    if (i === 0) {
+      swimlaneButtons.append('<button class="btn btn-primary btn-sm disabled"><i class="fas fa-hand-point-up"></i></button></div>');
+    } else {
+      swimlaneButtons.append('<button class="btn btn-primary btn-sm" onclick="swapSwimlanes(' + i + ',' + (i - 1) + ')"><i class="fas fa-hand-point-up"></i></button></div>');
+    }
+    if (i === swimlanes.length - 1) {
+      swimlaneButtons.append('<button class="btn btn-primary btn-sm disabled"><i class="fas fa-hand-point-down"></i></button></div>');
+    } else {
+      swimlaneButtons.append('<button class="btn btn-primary btn-sm" onclick="swapSwimlanes(' + i + ',' + (i + 1) + ')"><i class="fas fa-hand-point-down"></i></button></div>');
+    }
     var tableBodyRow = $('<tr>').appendTo(tableBody);
     for (var j = 0; j < lastRow - 1; j++) {
       renderCardColumn(tableBodyRow, swimlane.wip);
@@ -307,5 +328,15 @@ $('#board').ready(function(){
     });
   } else {
     load(window.boardId);
+  }
+});
+
+$(document).keypress(function(e) {
+  if (e.which === 46) {
+    if ($('.buttons').css('display') === 'inline-flex') {
+      $('.buttons').css('display', 'none');
+    } else {
+      $('.buttons').css('display', 'inline-flex');
+    }
   }
 });
