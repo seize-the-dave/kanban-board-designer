@@ -210,10 +210,10 @@ var render = function(board) {
       swimlaneButtons.append('<button class="btn btn-primary btn-sm" onclick="swapSwimlanes(' + i + ',' + (i + 1) + ')"><i class="fas fa-hand-point-down"></i></button></div>');
     }
     var tableBodyRow = $('<tr>').appendTo(tableBody);
-    for (var j = 0; j < lastRow - 1; j++) {
+    for (var j = 0; j < lastRow; j++) {
       renderCardColumn(tableBodyRow, swimlane.wip);
     }
-    renderAdsenseCardColumn(tableBodyRow);
+    // renderAdsenseCardColumn(tableBodyRow);
   }
 }
 
