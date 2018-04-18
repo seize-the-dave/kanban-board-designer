@@ -191,7 +191,7 @@ var fillIn = function(pivot, columns, offset) {
 
 var render = function(board) {
   $('.tooltip').css('display', 'none');
-  
+
   var columns = board.board.columns;
   var size = Math.floor(12 / columns.length);
 
@@ -223,7 +223,11 @@ var render = function(board) {
       swimlaneButtons.append('<button class="btn btn-primary btn-sm" data-toggle="tooltip" title="Move Swimlane Up" onclick="swapSwimlanes(' + i + ',' + (i - 1) + ')"><i class="fas fa-arrow-up"></i></button></div>');
     }
     swimlaneButtons.append('<button class="btn btn-primary btn-sm" data-toggle="tooltip" title="Add Swimlane" onclick="addSwimlane(' + (i + 1) + ')"><i class="fas fa-plus"></i></button></div>');
-    swimlaneButtons.append('<button class="btn btn-primary btn-sm" data-toggle="tooltip" title="Delete Swimlane" onclick="delSwimlane(' + i + ');"><i class="fas fa-trash-alt"></i></button>');
+    if (swimlanes.length > 1) {
+      swimlaneButtons.append('<button class="btn btn-primary btn-sm" data-toggle="tooltip" title="Delete Swimlane" onclick="delSwimlane(' + i + ');"><i class="fas fa-trash-alt"></i></button>');
+    } else {
+      swimlaneButtons.append('<button class="btn btn-primary btn-sm disabled" data-toggle="tooltip" title="Delete Swimlane"><i class="fas fa-trash-alt"></i></button>');
+    }
     if (i === swimlanes.length - 1) {
       swimlaneButtons.append('<button class="btn btn-primary btn-sm disabled" data-toggle="tooltip" title="Move Swimlane Down"><i class="fas fa-arrow-down"></i></button></div>');
     } else {
