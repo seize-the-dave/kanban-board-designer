@@ -58,6 +58,14 @@ var renameColumn = function(indices) {
   save(window.board);
 }
 
+var renameSwimlane = function(offset) {
+  var swimlane = window.board.board.swimlanes[offset];
+  swimlane.name = window.prompt('Rename Swimlane', swimlane.name);
+  swimlane.wip = window.prompt('Swimlane WIP', swimlane.wip);
+
+  save(window.board);
+}
+
 var splitColumn = function(indices) {
   var container = containerForIndices(indices);
   container.columns = [
@@ -176,15 +184,16 @@ var render = function(board) {
 
   var swimlanes = board.board.swimlanes;
   var tableBody = $('<tbody>').appendTo(table);
-  swimlanes.forEach(function(swimlane) {
+  for (var i = 0; i < swimlanes.length; i++) {
+    var swimlane = swimlanes[i];
     var swimlaneRow = $('<tr>').appendTo(tableBody);
-    swimlaneRow.append('<th class="swimlane" colspan="' + lastRow + '">' + swimlane.name + '</th>');
+    swimlaneRow.append('<th class="swimlane" colspan="' + lastRow + '"><a href="#" onclick="renameSwimlane(' + i + ')">' + swimlane.name + '</a></th>');
     var tableBodyRow = $('<tr>').appendTo(tableBody);
-    for (var i = 0; i < lastRow - 1; i++) {
+    for (var j = 0; j < lastRow - 1; j++) {
       renderCardColumn(tableBodyRow, swimlane.wip);
     }
     renderAdsenseCardColumn(tableBodyRow);
-  });
+  }
 }
 
 var renderTableHeader = function(tableHeaderRow, span) {
