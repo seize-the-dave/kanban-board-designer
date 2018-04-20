@@ -237,7 +237,6 @@ var render = function(board) {
     for (var j = 0; j < lastRow; j++) {
       renderCardColumn(tableBodyRow, swimlane.wip);
     }
-    // renderAdsenseCardColumn(tableBodyRow);
   }
 }
 
@@ -319,11 +318,6 @@ var renderCardColumn = function(tableBodyRow, wip) {
   }
 }
 
-var renderAdsenseCardColumn = function(tableBodyRow) {
-  var tableBodyCell = $('<td>').appendTo(tableBodyRow);
-  tableBodyCell.append('<div class="column-1" id="adsense">');
-}
-
 var save = function(board) {
   $.ajax({
     type: "PUT",
@@ -364,15 +358,5 @@ $('#board').ready(function(){
     });
   } else {
     load(window.boardId);
-  }
-});
-
-$(document).keypress(function(e) {
-  if (e.which === 46) {
-    if ($('.buttons').css('display') === 'inline-flex') {
-      $('.buttons').css('display', 'none');
-    } else {
-      $('.buttons').css('display', 'inline-flex');
-    }
   }
 });
