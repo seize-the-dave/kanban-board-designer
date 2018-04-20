@@ -7,7 +7,7 @@ var board = {
       {name: "Ready", maxWip: 3},
       {name: "Development", maxWip: 5, "columns": [
         {name: "In Progress", maxWip: 3},
-        {name: "Done", maxWip: 3},
+        {name: "Done", maxWip: 2},
       ]},
       {name: "Validation", maxWip: 4},
       {name: "Done", maxWip: 3}
@@ -44,7 +44,11 @@ var addColumn = function(indices) {
 }
 
 var newSwimlane = function() {
-  return {name: window.prompt('Swimlane Name', 'New Swimlane'), wip: 2};
+  var swimlane = {name: 'New Swimlane', wip: 2};
+  swimlane.name = window.prompt('Swimlane Name', swimlane.name) || swimlane.name;
+  swimlane.wip = window.prompt('Swimlane WIP', swimlane.wip) || swimlane.wip;
+
+  return swimlane;
 }
 
 var addSwimlane = function(offset) {
@@ -67,17 +71,18 @@ var containerForIndices = function(indices) {
   return container;
 }
 
-var renameColumn = function(indices) {
+var editColumn = function(indices) {
   var container = containerForIndices(indices);
-  container.name = window.prompt('Rename Column', container.name);
+  container.name = window.prompt('Rename Column', container.name) || container.name;
+  container.maxWip = window.prompt('Change Maxiumum WIP', container.maxWip) || container.maxWip;
 
   save(window.board);
 }
 
-var renameSwimlane = function(offset) {
+var editSwimlane = function(offset) {
   var swimlane = window.board.board.swimlanes[offset];
-  swimlane.name = window.prompt('Rename Swimlane', swimlane.name);
-  swimlane.wip = window.prompt('Swimlane WIP', swimlane.wip);
+  swimlane.name = window.prompt('Rename Swimlane', swimlane.name) || swimlane.name;
+  swimlane.wip = window.prompt('Swimlane WIP', swimlane.wip) || swimlane.wip;
 
   save(window.board);
 }
@@ -98,13 +103,6 @@ var splitColumn = function(indices) {
     newColumn(),
     newColumn()
   ];
-
-  save(window.board);
-}
-
-var changeMaxWip = function(indices) {
-  var container = containerForIndices(indices);
-  container.maxWip = window.prompt('Change Maxiumum WIP', container.maxWip);
 
   save(window.board);
 }
@@ -138,7 +136,7 @@ var renderHeader = function(tableHeader, columns, pivot) {
       var filledCols = row.filter(column => column.name !== undefined);
       for (var j = 0; j < pivot[i].length; j++) {
         var column = row[j];
-        var tableHeaderCell = renderTableHeader(tableHeaderRow, column.span);
+        var tableHeaderCell = renderTableHeader(tableHeaderRow, column);
         if (column.name !== undefined) {
           renderColumnName(tableHeaderCell, column, filledCols.length);
         }
@@ -190,7 +188,7 @@ var fillIn = function(pivot, columns, offset) {
 }
 
 var render = function(board) {
-  $('.tooltip').css('display', 'none');
+  $('.tooltip').remove();
 
   var columns = board.board.columns;
   var size = Math.floor(12 / columns.length);
@@ -215,18 +213,20 @@ var render = function(board) {
   for (var i = 0; i < swimlanes.length; i++) {
     var swimlane = swimlanes[i];
     var swimlaneRow = $('<tr>').appendTo(tableBody);
-    var swimlaneCell = $('<th class="swimlane" colspan="' + lastRow + '"><a href="#" onclick="renameSwimlane(' + i + ')">' + swimlane.name + '</a>').appendTo(swimlaneRow);
-    var swimlaneButtons = $('<br/><div class="btn-group buttons">').appendTo(swimlaneCell);
-    if (i === 0) {
-      swimlaneButtons.append('<button class="btn btn-primary btn-sm disabled" data-toggle="tooltip" title="Move Swimlane Up"><i class="fas fa-arrow-up"></i></button></div>');
-    } else {
-      swimlaneButtons.append('<button class="btn btn-primary btn-sm" data-toggle="tooltip" title="Move Swimlane Up" onclick="swapSwimlanes(' + i + ',' + (i - 1) + ')"><i class="fas fa-arrow-up"></i></button></div>');
-    }
+    var swimlaneCell = $('<th onmouseout="hideButtons(\'#swimlane_' + i + '\')" onmouseover="showButtons(\'#swimlane_' + i + '\')" class="swimlane" colspan="' + lastRow + '">').appendTo(swimlaneRow);
+    var swimlaneTitle = $('<div>' + swimlane.name + '</div>').appendTo(swimlaneCell);
+    var swimlaneButtons = $('<div class="btn-group buttons" id="swimlane_' + i + '">').appendTo(swimlaneCell);
+    swimlaneButtons.append('<button class="btn btn-primary btn-sm" data-toggle="tooltip" title="Edit Swimlane"  onclick="editSwimlane(' + i + ');"><i class="fas fa-edit"></i></button>');
     swimlaneButtons.append('<button class="btn btn-primary btn-sm" data-toggle="tooltip" title="Add Swimlane" onclick="addSwimlane(' + (i + 1) + ')"><i class="fas fa-plus"></i></button></div>');
     if (swimlanes.length > 1) {
       swimlaneButtons.append('<button class="btn btn-primary btn-sm" data-toggle="tooltip" title="Delete Swimlane" onclick="delSwimlane(' + i + ');"><i class="fas fa-trash-alt"></i></button>');
     } else {
       swimlaneButtons.append('<button class="btn btn-primary btn-sm disabled" data-toggle="tooltip" title="Delete Swimlane"><i class="fas fa-trash-alt"></i></button>');
+    }
+    if (i === 0) {
+      swimlaneButtons.append('<button class="btn btn-primary btn-sm disabled" data-toggle="tooltip" title="Move Swimlane Up"><i class="fas fa-arrow-up"></i></button></div>');
+    } else {
+      swimlaneButtons.append('<button class="btn btn-primary btn-sm" data-toggle="tooltip" title="Move Swimlane Up" onclick="swapSwimlanes(' + i + ',' + (i - 1) + ')"><i class="fas fa-arrow-up"></i></button></div>');
     }
     if (i === swimlanes.length - 1) {
       swimlaneButtons.append('<button class="btn btn-primary btn-sm disabled" data-toggle="tooltip" title="Move Swimlane Down"><i class="fas fa-arrow-down"></i></button></div>');
@@ -241,8 +241,13 @@ var render = function(board) {
   }
 }
 
-var renderTableHeader = function(tableHeaderRow, span) {
-  return $('<th colspan="' + span + '">').appendTo(tableHeaderRow);
+var renderTableHeader = function(tableHeaderRow, column) {
+  if (column.indices) {
+    var id = column.indices.join('_');
+    return $('<th onmouseout="hideButtons(\'#column_' + id + '\')" onmouseover="showButtons(\'#column_' + id + '\')" colspan="' + column.span + '">').appendTo(tableHeaderRow);
+  } else {
+    return $('<th colspan="' + column.span + '">').appendTo(tableHeaderRow);
+  }
 }
 
 var findPosition = function(indices) {
@@ -255,6 +260,14 @@ var toggle = function(id) {
   } else {
     $(id).css('display', 'none');
   }
+}
+
+var showButtons = function(id) {
+  $(id).css('display', 'inline-block');
+}
+
+var hideButtons = function(id) {
+  $(id).css('display', 'none');
 }
 
 var renderColumnName = function(headerCell, column, cols) {
@@ -270,18 +283,12 @@ var renderColumnName = function(headerCell, column, cols) {
   leftIndices.push(thisOffset - 1);
 
   var indicesString = JSON.stringify(indices);
-  var buttons_id = 'buttons_' + indices.join('_');
-  headerCell.append('<a href="#" onclick="renameColumn(' + indicesString + ');">' + column.name + '</a> ');
-  headerCell.append('(<a href="#" onclick="changeMaxWip(' + indicesString + ');">' + column.maxWip + '</a>) ');
-  // headerCell.append('[<a href="#" onclick="toggle(\'#' + buttons_id + '\');">?</a>]');
-  headerCell.append('<br/>');
+  var buttons_id = 'column_' + indices.join('_');
+  var titleDiv = $('<div>').appendTo(headerCell)
+  titleDiv.append(column.name + ' (' + column.maxWip + ')');
 
   var buttons = $('<div class="buttons btn-group" id="' + buttons_id + '">').appendTo(headerCell);
-  if (thisOffset !== 0) {
-    buttons.append('<button class="btn btn-primary btn-sm" data-toggle="tooltip" title="Move Left" onclick="swapColumn(' + indicesString + ',' + JSON.stringify(leftIndices) + ');"><i class="fas fa-arrow-left"></i></button>');
-  } else {
-    buttons.append('<button class="btn btn-primary btn-sm disabled" data-toggle="tooltip" title="Move Left"><i class="fas fa-arrow-left"></i></button>');
-  }
+  buttons.append('<button class="btn btn-primary btn-sm" data-toggle="tooltip" title="Edit Column"  onclick="editColumn(' + indicesString + ');"><i class="fas fa-edit"></i></button>');
   buttons.append('<button class="btn btn-primary btn-sm" data-toggle="tooltip" title="Add Column"  onclick="addColumn(' + JSON.stringify(rightIndices) + ');"><i class="fas fa-plus"></i></button>');
   if (containerForIndices(indices).columns === undefined) {
     buttons.append('<button class="btn btn-primary btn-sm" data-toggle="tooltip" title="Split into Two" onclick="splitColumn(' + indicesString + ');"><i class="fas fa-columns"></i></button>');
@@ -289,6 +296,11 @@ var renderColumnName = function(headerCell, column, cols) {
     buttons.append('<button class="btn btn-primary btn-sm disabled" data-toggle="tooltip" title="Split into Two"><i class="fas fa-columns"></i></button>');
   }
   buttons.append('<button class="btn btn-primary btn-sm" data-toggle="tooltip" title="Delete Column" onclick="delColumn(' + indicesString + ');"><i class="fas fa-trash-alt"></i></button>');
+  if (thisOffset !== 0) {
+    buttons.append('<button class="btn btn-primary btn-sm" data-toggle="tooltip" title="Move Left" onclick="swapColumn(' + indicesString + ',' + JSON.stringify(leftIndices) + ');"><i class="fas fa-arrow-left"></i></button>');
+  } else {
+    buttons.append('<button class="btn btn-primary btn-sm disabled" data-toggle="tooltip" title="Move Left"><i class="fas fa-arrow-left"></i></button>');
+  }
   if (thisOffset < (cols - 1)) {
     buttons.append('<button class="btn btn-primary btn-sm" data-toggle="tooltip" title="Move Right" onclick="swapColumn(' + indicesString + ',' + JSON.stringify(rightIndices) + ');"><i class="fas fa-arrow-right"></i></button>');
   } else {
