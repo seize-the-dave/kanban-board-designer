@@ -3,7 +3,7 @@ var lambdaUrl = "https://euq9lhwui2.execute-api.us-east-1.amazonaws.com/dev/boar
 var board = {
   "board": {
     "columns": [
-      {name: "To Do", maxWip: 1},
+      {name: "Backlog", maxWip: 1},
       {name: "Ready", maxWip: 3},
       {name: "Development", maxWip: 5, "columns": [
         {name: "In Progress", maxWip: 3},
