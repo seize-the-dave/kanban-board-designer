@@ -115,5 +115,63 @@
     <div class="h-100" id="board">
 
     </div>
+    <div class="modal fade" id="swimlaneModal" tabindex="-1" role="dialog" aria-labelledby="swimlaneModalLabel" aria-hidden="true">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="swimlaneModalLabel">Edit Swimlane</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <form>
+            <div class="modal-body">
+              <input type="hidden" id="swimlane-id">
+              <div class="form-group">
+                <label for="recipient-name" class="col-form-label">Swimlane Name:</label>
+                <input type="text" class="form-control" id="swimlane-name">
+              </div>
+              <div class="form-group">
+                <label for="message-text" class="col-form-label">Number of Cards to Show:</label>
+                <input type="text" class="form-control" id="swimlane-wip">
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+              <input type="submit" class="btn btn-primary"/>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    <div class="modal fade" id="columnModal" tabindex="-1" role="dialog" aria-labelledby="columnModalLabel" aria-hidden="true">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="swimlaneModalLabel">Edit Column</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <form>
+            <div class="modal-body">
+              <input type="hidden" id="column-indices">
+              <div class="form-group">
+                <label for="recipient-name" class="col-form-label">Column Name:</label>
+                <input type="text" class="form-control" id="column-name">
+              </div>
+              <div class="form-group">
+                <label for="message-text" class="col-form-label">WIP:</label>
+                <input type="text" class="form-control" id="column-wip">
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+              <input type="submit" class="btn btn-primary"/>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
   </body>
 </html>
