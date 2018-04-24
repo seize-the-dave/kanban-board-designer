@@ -287,6 +287,16 @@ var calculateWidth = function(container) {
   return width;
 }
 
+var collectWipLimits = function(container, limits) {
+  if (container.columns === undefined) {
+    return limits.push(Number(container.maxWip));
+  } else {
+    for (var i = 0; i < container.columns.length; i++) {
+      collectWipLimits(container.columns[i], limits);
+    }
+  }
+}
+
 var render = function(board) {
   $('.tooltip').remove();
   $('#board').empty();
@@ -382,12 +392,15 @@ var render = function(board) {
     var cardSection = $('<tbody>').appendTo(table);
     var cardRow = $('<tr>').appendTo(cardSection);
 
+    var wipLimits = Array();
+    collectWipLimits(swimlane, wipLimits);
+
     for (var j = 0; j < swimlaneWidth; j++) {
       var span = 1;
       if (widthDifference > 0 && j == swimlaneWidth - 1) {
         span += widthDifference;
       }
-      cardRow.append(makeCardColumn(swimlane.wip, span));
+      cardRow.append(makeCardColumn(wipLimits[j], span));
     }
   }
 }
@@ -501,11 +514,15 @@ var makeButton = function(title, icon) {
 }
 
 var makeCardColumn = function(wip, span) {
+  var lowerWip = Math.max(2, wip - 1);
+  var range = wip - lowerWip;
+
   var tableBodyCell = $('<td colspan="' + span + '">');
   var cardBoards = $('<div class="column-1">').appendTo(tableBodyCell);
   var colours = ['yellow', 'yellow', 'yellow', 'blue', 'pink', 'orange', 'green'];
 
-  for (var i = 0; i < wip; i++) {
+  var cards = lowerWip + Math.floor(range * Math.random())
+  for (var i = 0; i < cards; i++) {
     var randomColour = colours[Math.floor(colours.length * Math.random())];
     cardBoards.append('<div class="card card-' + randomColour + '">');
   }
