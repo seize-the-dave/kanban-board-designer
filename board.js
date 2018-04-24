@@ -61,7 +61,6 @@ var addColumn = function(swimlane, indices) {
 
     var offset = indices.pop();
     var container = containerForIndices(swimlane, indices);
-    console.log(container);
     container.columns.splice(offset, 0, column);
     save(window.board);
 
@@ -310,7 +309,6 @@ var render = function(board) {
     var widthDifference = boardWidth - swimlaneWidth;
     if (widthDifference > 0) {
       // Need to increase the width of the last columns
-      console.log(widthDifference);
       for (var j = 0; j < pivot.length; j++) {
         var row = pivot[j];
         var column = row[row.length - 1];
@@ -516,7 +514,6 @@ var makeCardColumn = function(wip, span) {
 }
 
 var save = function(board) {
-  console.log(board);
   $.ajax({
     type: "PUT",
     url: lambdaUrl + "?board=" + board.id,
