@@ -22,10 +22,7 @@
       html, body {
         margin: 0em;
       }
-      /* div {
-        border: 0.01em solid black;
-      } */
-      thead th {
+      .column, .swimlane {
         border-bottom: 3px solid black;
         border-right: 3px solid black;
         font-family: 'Rubik', cursive;
@@ -66,14 +63,16 @@
       div.card-pink {
         background-color: rgb(255, 90, 180);
       }
-      .column-1 {
-        /* width: 200px; */
-        padding: 0.5em;      }
-      th {
-        position: relative;
-        padding: 0.3em;
+      td.cards > div {
+        width: 200px;
       }
-      th div.btn-group {
+      th, td {
+        border: 1px solid black;
+        border-collapse: collapse;
+        position: relative;
+        padding: 0em 0em;
+      }
+      td div.btn-group {
         position: absolute;
         padding: 0em;
         width: 100%;
