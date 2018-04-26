@@ -366,6 +366,10 @@ var renderSwimlane = function(wrapper) {
   swimlaneButtons.append(addButton);
 
   var deleteButton = makeButton('Delete Swimlane', 'fa-trash-alt');
+  deleteButton.click(function(e) {
+    delete wrapper.parent.swimlanes[wrapper.parent.swimlanes.indexOf(wrapper.payload)];
+    save(window.board);
+  })
   // if (swimlanes.length > 1) {
   //   deleteButton.click(i, function(e) {
   //     delSwimlane(e.data);
