@@ -1,39 +1,106 @@
 var lambdaUrl = "https://euq9lhwui2.execute-api.us-east-1.amazonaws.com/dev/board";
 
-var board = {
-  "board": {
-    "swimlanes": [
-      {
-        name: "Expedite",
-        wip: 1,
-        "columns": [
-          {name: "Backlog", maxWip: 1},
-          {name: "Ready", maxWip: 3},
-          {name: "Development", maxWip: 5, "columns": [
-            {name: "In Progress", maxWip: 3},
-            {name: "Done", maxWip: 2},
-          ]},
-          {name: "Validation", maxWip: 4},
-          {name: "Done", maxWip: 3}
-        ],
-      },
-      {
-        name: "Standard",
-        wip: 4,
-        "columns": [
-          {name: "Backlog", maxWip: 1},
-          {name: "Ready", maxWip: 3},
-          {name: "Development", maxWip: 5, "columns": [
-            {name: "In Progress", maxWip: 3},
-            {name: "Done", maxWip: 2},
-          ]},
-          {name: "Validation", maxWip: 4},
-          {name: "Done", maxWip: 3}
-        ],
-      }
-    ]
-  }
-};
+function Board() {
+  this.columns = [];
+}
+Board.prototype.addColumn = function(column) {
+  this.columns.push(column);
+}
+Board.fromObject = function(o) {
+  var b = new Board();
+  o.columns.forEach(function(c) {
+    b.addColumn(Column.fromObject(c));
+  });
+  return b;
+}
+
+function Column(name, maxWip, swimlanes) {
+  this.name = name;
+  this.maxWip = maxWip;
+  this.swimlanes = swimlanes === undefined ? [] : swimlanes;
+}
+Column.prototype.addSwimlane = function(swimlane) {
+  this.swimlanes.push(swimlane);
+}
+Column.fromObject = function(o) {
+  var c = new Column(o.name, o.maxWip, []);
+  o.swimlanes.forEach(function(s) {
+    c.addSwimlane(Swimlane.fromObject(s));
+  });
+  return c;
+}
+
+function Swimlane(name, wip, columns) {
+  this.name = name;
+  this.wip = wip;
+  this.columns = columns === undefined ? [] : columns;
+}
+Swimlane.prototype.addColumn = function(column) {
+  this.columns.push(column);
+}
+Swimlane.fromObject = function(o) {
+  var s = new Swimlane(o.name, o.wip, []);
+  o.columns.forEach(function(c) {
+    s.addColumn(Column.fromObject(c));
+  });
+  return s;
+}
+
+var defaultBoard = new Board();
+var defaultColumn = new Column('Development', 0);
+defaultBoard.addColumn(defaultColumn);
+
+var defaultSwimlane = new Swimlane('Default', 1);
+defaultColumn.addSwimlane(defaultSwimlane);
+
+defaultSwimlane.addColumn(new Column('Backlog', 1, [new Swimlane('Default', 1)]));
+defaultSwimlane.addColumn(new Column('Ready', 3, [new Swimlane('Default', 1)]));
+var developmentColumn = new Column('Development', 5);
+defaultSwimlane.addColumn(developmentColumn);
+defaultSwimlane.addColumn(new Column('Validation', 4, [new Swimlane('Default', 1)]));
+defaultSwimlane.addColumn(new Column('Done', 3, [new Swimlane('Default', 1)]));
+
+var developmentSwimlane = new Swimlane('Default', 1);
+developmentColumn.addSwimlane(developmentSwimlane);
+
+developmentSwimlane.addColumn(new Column('In Progress', 3, [new Swimlane('Default', 1)]));
+developmentSwimlane.addColumn(new Column('Done', 2, [new Swimlane('Default', 1)]));
+
+// var board = {
+//   "board": {
+//     "swimlanes": [
+//       {
+//         name: "Expedite",
+//         wip: 1,
+//         "columns": [
+//           {name: "Backlog", maxWip: 1},
+//           {name: "Ready", maxWip: 3},
+//           {name: "Development", maxWip: 5, "columns": [
+//             {name: "In Progress", maxWip: 3},
+//             {name: "Done", maxWip: 2},
+//           ]},
+//           {name: "Validation", maxWip: 4},
+//           {name: "Done", maxWip: 3}
+//         ],
+//       },
+//       {
+//         name: "Standard",
+//         wip: 4,
+//         "columns": [
+//           {name: "Backlog", maxWip: 1},
+//           {name: "Ready", maxWip: 3},
+//           {name: "Development", maxWip: 5, "columns": [
+//             {name: "In Progress", maxWip: 3},
+//             {name: "Done", maxWip: 2},
+//           ]},
+//           {name: "Validation", maxWip: 4},
+//           {name: "Done", maxWip: 3}
+//         ],
+//       }
+//     ]
+//   }
+// };
+var board = defaultBoard;
 var boardId;
 
 var deleteColumn = function(swimlane, indices) {
@@ -269,24 +336,6 @@ var fillIn = function(pivot, columns, offset) {
   }
 }
 
-var calculateWidth = function(container) {
-  var width = 0;
-  if (container.swimlanes !== undefined) {
-    for (var i = 0; i < container.swimlanes.length; i++) {
-      width = Math.max(width, calculateWidth(container.swimlanes[i]));
-    }
-  } else {
-    if (container.columns === undefined) {
-      return 1;
-    } else {
-      for (var i = 0; i < container.columns.length; i++) {
-        width += calculateWidth(container.columns[i]);
-      }
-    }
-  }
-  return width;
-}
-
 var collectWipLimits = function(container, limits) {
   if (container.columns === undefined) {
     return limits.push(Number(container.maxWip));
@@ -297,112 +346,246 @@ var collectWipLimits = function(container, limits) {
   }
 }
 
+var calculateColumnWidth = function(column) {
+  var columnWidth = 1;
+  column.swimlanes.forEach(function(swimlane) {
+    columnWidth = Math.max(columnWidth, calculateSwimlaneWidth(swimlane));
+  });
+  return columnWidth;
+}
+
+var calculateSwimlaneWidth = function(container) {
+  var swimlaneWidth = 0;
+
+  container.columns.forEach(function(column) {
+    swimlaneWidth += calculateColumnWidth(column);
+  });
+
+  return swimlaneWidth;
+}
+
+var calculateSwimlaneDepth = function(swimlane) {
+  var swimlaneDepth = 1;
+  swimlane.columns.forEach(function(column) {
+    swimlaneDepth = Math.max(swimlaneDepth, calculateColumnDepth(column));
+  });
+
+  return swimlaneDepth;
+}
+
+var calculateColumnDepth = function(column) {
+  var columnDepth = 2;
+  column.swimlanes.forEach(function(swimlane) {
+    columnDepth += calculateSwimlaneDepth(swimlane);
+  });
+  return columnDepth;
+}
+
+var renderColumn = function(wrapper) {
+  var columnHtml = $('<td class="column">');
+  columnHtml.append(wrapper.payload.name + ' (' + wrapper.payload.maxWip + ')');
+  columnHtml.attr('colspan', wrapper.colspan);
+  columnHtml.mouseout(function(e) {
+    hideButtons($(this));
+  });
+  columnHtml.mouseover(function(e) {
+    showButtons($(this));
+  });
+
+  var columnButtons = $('<div class="buttons btn-group">');
+
+  var editButton = makeButton('Edit Column', 'fa-edit');
+  // editButton.click([swimlane, indices], function(e) {
+  //   editColumn(e.data[0], e.data[1]);
+  // })
+  columnButtons.append(editButton);
+
+  var addButton = makeButton('Add Column', 'fa-plus');
+  // addButton.click([swimlane, rightIndices], function(e) {
+  //   addColumn(e.data[0], e.data[1]);
+  // });
+  columnButtons.append(addButton);
+
+  var splitColumnButton = makeButton('Split Column', 'fa-columns');
+  // if (column.columns === undefined) {
+  //   splitButton.click(column, function(e) {
+  //     splitColumn(e.data, 2);
+  //   });
+  // } else {
+  //   splitButton.attr('disabled', 'disabled');
+  // }
+  columnButtons.append(splitColumnButton);
+
+  var splitSwimlaneButton = makeButton('Split into Swimlanes', 'fa-bars');
+  // if (column.columns === undefined) {
+  //   splitButton.click(column, function(e) {
+  //     splitColumn(e.data, 2);
+  //   });
+  // } else {
+  //   splitButton.attr('disabled', 'disabled');
+  // }
+  columnButtons.append(splitSwimlaneButton);
+
+  var deleteButton = makeButton('Delete Column', 'fa-trash-alt');
+  // deleteButton.click([swimlane, indices], function(e) {
+  //   deleteColumn(e.data[0], e.data[1]);
+  // })
+  columnButtons.append(deleteButton);
+
+  var moveLeftButton = makeButton('Move Left', 'fa-arrow-left');
+  // if (thisOffset !== 0) {
+  //   moveLeftButton.click([swimlane, indices, leftIndices], function(e) {
+  //     swapColumn(e.data[0], e.data[1], e.data[2]);
+  //   });
+  // } else {
+  //   moveLeftButton.attr('disabled', 'disabled');
+  // }
+  columnButtons.append(moveLeftButton);
+
+  var moveRightButton = makeButton('Move Right', 'fa-arrow-right');
+  // if (thisOffset < (cols - 1)) {
+  //   moveRightButton.click([swimlane, indices, rightIndices], function(e) {
+  //     swapColumn(e.data[0], e.data[1], e.data[2]);
+  //   });
+  // } else {
+  //   moveRightButton.attr('disabled', 'disabled');
+  // }
+  columnButtons.append(moveRightButton);
+  columnHtml.append(columnButtons);
+
+  return columnHtml;
+}
+
+var renderCards = function(wrapper) {
+  var cardsHtml = $('<td class="cards">');
+  cardsHtml.attr('rowspan', wrapper.rowspan);
+
+  var cardBoards = $('<div>').appendTo(cardsHtml);
+  var colours = ['yellow', 'yellow', 'yellow', 'blue', 'pink', 'orange', 'green'];
+
+  for (var i = 0; i < wrapper.payload.wip; i++) {
+    var randomColour = colours[Math.floor(colours.length * Math.random())];
+    cardBoards.append('<div class="card card-' + randomColour + '">');
+  }
+
+  return cardsHtml;
+}
+
+var renderSwimlane = function(wrapper) {
+  var swimlaneHtml = $('<td class="swimlane">');
+  swimlaneHtml.append(wrapper.payload.name);
+  swimlaneHtml.attr('colspan', wrapper.colspan);
+  swimlaneHtml.mouseout(function(e) {
+    hideButtons($(this));
+  });
+  swimlaneHtml.mouseover(function(e) {
+    showButtons($(this));
+  });
+  var swimlaneButtons = $('<div class="btn-group buttons">');
+  var editButton = makeButton('Edit Swimlane', 'fa-edit');
+  // editButton.click(i, function(e) {
+  //   editSwimlane(e.data);
+  // })
+  swimlaneButtons.append(editButton);
+
+  var addButton = makeButton('Add Swimlane', 'fa-plus');
+  // addButton.click([i + 1, swimlane.columns], function(e) {
+  //   addSwimlane(e.data[0], e.data[1]);
+  // });
+  swimlaneButtons.append(addButton);
+
+  var deleteButton = makeButton('Delete Swimlane', 'fa-trash-alt');
+  // if (swimlanes.length > 1) {
+  //   deleteButton.click(i, function(e) {
+  //     delSwimlane(e.data);
+  //   })
+  // } else {
+  //   deleteButton.attr('disabled', 'disabled');
+  // }
+  swimlaneButtons.append(deleteButton);
+
+  var moveUpButton = makeButton('Move Swimlane Up', 'fa-arrow-up');
+  // if (i !== 0) {
+  //   moveUpButton.click(i, function(e) {
+  //     swapSwimlanes(e.data, e.data - 1);
+  //   })
+  // } else {
+  //   moveUpButton.attr('disabled', 'disabled');
+  // }
+  swimlaneButtons.append(moveUpButton);
+
+  var moveDownButton = makeButton('Move Swimlane Down', 'fa-arrow-down');
+  // if (i < swimlanes.length - 1) {
+  //   moveDownButton.click(i, function(e) {
+  //     swapSwimlanes(e.data, e.data + 1);
+  //   });
+  // } else {
+  //   moveDownButton.attr('disabled', 'disabled');
+  // }
+  swimlaneButtons.append(moveDownButton);
+  swimlaneHtml.append(swimlaneButtons);
+
+  return swimlaneHtml;
+}
+
+var columnToGrid = function(column, grid, offset, colDepth) {
+  column.swimlanes.forEach(function(swimlane) {
+    grid[offset].push(wrap(swimlane, Math.max(1, calculateSwimlaneWidth(swimlane))));
+    swimlaneToGrid(swimlane, grid, offset + 1, colDepth, column.maxWip);
+  });
+}
+
+var swimlaneToGrid = function(swimlane, grid, offset, colDepth, colWip) {
+  if (swimlane.columns.length > 0) {
+    var longestColumn = 1;
+    swimlane.columns.forEach(function(column) {
+      longestColumn = Math.max(longestColumn, calculateColumnDepth(column));
+    });
+    swimlane.columns.forEach(function(column) {
+      var colDepth = (longestColumn - calculateColumnDepth(column)) + 1;
+      grid[offset].push(wrap(column, calculateColumnWidth(column)));
+      columnToGrid(column, grid, offset + 1, colDepth);
+    });
+  } else {
+    grid[offset].push(wrap({name: 'Cards', wip: colWip}, 1, colDepth));
+  }
+}
+
+var wrap = function(payload, colspan, rowspan) {
+  return {
+    payload: payload,
+    colspan: colspan,
+    rowspan: rowspan
+  }
+}
+
 var render = function(board) {
   $('.tooltip').remove();
+
+  var swimlanes = board.columns;
+  var boardWidth = calculateSwimlaneWidth(board);
+  var boardDepth = calculateSwimlaneDepth(board, 0);
+  console.log(boardWidth + 'x' + boardDepth);
+
+  var grid = Array(boardDepth).fill(null).map(x => []);
+  swimlaneToGrid(board, grid, 0);
+
   $('#board').empty();
-
   var table = $('<table>').appendTo('#board');
-
-  var swimlanes = board.board.swimlanes;
-  var boardWidth = calculateWidth(board.board);
-
-  for (var i = 0; i < swimlanes.length; i++) {
-    var swimlane = swimlanes[i];
-    var augmentedBoard = Object.assign(board.board.swimlanes[i], {});
-    augment(augmentedBoard, []);
-
-    var depth = findDepth(augmentedBoard);
-    var pivot = Array(depth).fill(null).map(x => []);
-    fillIn(pivot, augmentedBoard.columns, 0);
-
-    var swimlaneWidth = calculateWidth(swimlane);
-    var widthDifference = boardWidth - swimlaneWidth;
-    if (widthDifference > 0) {
-      // Need to increase the width of the last columns
-      for (var j = 0; j < pivot.length; j++) {
-        var row = pivot[j];
-        var column = row[row.length - 1];
-        column.span += widthDifference;
+  var tbody = $('<tbody>').appendTo(table);
+  grid.forEach(function(row) {
+    var tableRow = $('<tr>').appendTo(tbody);
+    row.forEach(function(cell) {
+      var payload = cell.payload;
+      if (cell.payload.swimlanes !== undefined) {
+        tableRow.append(renderColumn(cell));
+      } else if (payload.columns !== undefined) {
+        tableRow.append(renderSwimlane(cell));
+      } else {
+        tableRow.append(renderCards(cell));
       }
-    }
-
-    var lastRow = pivot[pivot.length - 1].length;
-
-    var swimlaneHead = $('<thead>').appendTo(table);
-    var swimlaneRow = $('<tr>').appendTo(swimlaneHead);
-    var swimlaneCell = $('<th class="swimlane" colspan="' + boardWidth + '">');
-    swimlaneCell.mouseout(function(e) {
-      hideButtons($(this));
     });
-    swimlaneCell.mouseover(function(e) {
-      showButtons($(this));
-    });
-    swimlaneRow.append(swimlaneCell);
-
-    var swimlaneButtons = $('<div class="btn-group buttons" id="swimlane_' + i + '">');
-    var editButton = makeButton('Edit Swimlane', 'fa-edit');
-    editButton.click(i, function(e) {
-      editSwimlane(e.data);
-    })
-    swimlaneButtons.append(editButton);
-
-    var addButton = makeButton('Add Swimlane', 'fa-plus');
-    addButton.click([i + 1, swimlane.columns], function(e) {
-      addSwimlane(e.data[0], e.data[1]);
-    });
-    swimlaneButtons.append(addButton);
-
-    var deleteButton = makeButton('Delete Swimlane', 'fa-trash-alt');
-    if (swimlanes.length > 1) {
-      deleteButton.click(i, function(e) {
-        delSwimlane(e.data);
-      })
-    } else {
-      deleteButton.attr('disabled', 'disabled');
-    }
-    swimlaneButtons.append(deleteButton);
-
-    var moveUpButton = makeButton('Move Swimlane Up', 'fa-arrow-up');
-    if (i !== 0) {
-      moveUpButton.click(i, function(e) {
-        swapSwimlanes(e.data, e.data - 1);
-      })
-    } else {
-      moveUpButton.attr('disabled', 'disabled');
-    }
-    swimlaneButtons.append(moveUpButton);
-
-    var moveDownButton = makeButton('Move Swimlane Down', 'fa-arrow-down');
-    if (i < swimlanes.length - 1) {
-      moveDownButton.click(i, function(e) {
-        swapSwimlanes(e.data, e.data + 1);
-      });
-    } else {
-      moveDownButton.attr('disabled', 'disabled');
-    }
-    swimlaneButtons.append(moveDownButton);
-
-    var swimlaneTitle = $('<div>' + swimlane.name + '</div>').appendTo(swimlaneCell);
-    swimlaneTitle.appendTo(swimlaneCell);
-    swimlaneButtons.appendTo(swimlaneCell);
-
-    var columnHeadSection = $('<thead>').appendTo(table);
-    makeColumnHeaders(columnHeadSection, pivot, swimlane);
-
-    var cardSection = $('<tbody>').appendTo(table);
-    var cardRow = $('<tr>').appendTo(cardSection);
-
-    var wipLimits = Array();
-    collectWipLimits(swimlane, wipLimits);
-
-    for (var j = 0; j < swimlaneWidth; j++) {
-      var span = 1;
-      if (widthDifference > 0 && j == swimlaneWidth - 1) {
-        span += widthDifference;
-      }
-      cardRow.append(makeCardColumn(wipLimits[j], span));
-    }
-  }
+  });
 }
 
 var makeColumnHeader = function(column, filledCols, swimlane) {
@@ -534,7 +717,7 @@ var save = function(board) {
   $.ajax({
     type: "PUT",
     url: lambdaUrl + "?board=" + board.id,
-    data: JSON.stringify(board),
+    data: JSON.stringify({"board": board}),
     dataType: 'text',
   }).done(function() {
     render(board);
@@ -547,7 +730,7 @@ var load = function(boardId) {
       url: lambdaUrl + "?board=" + boardId,
       dataType: 'json',
   }).done(function(data) {
-    window.board = data;
+    window.board = data.board;
     render(window.board);
   })
 }
@@ -560,7 +743,7 @@ $('#board').ready(function(){
     $.ajax({
       type: "POST",
       url: lambdaUrl,
-      data: JSON.stringify(window.board),
+      data: JSON.stringify({"board": window.board}),
       dataType: 'text',
     }).done(function(data, textStatus, jqXHR) {
       window.boardId = new URL(jqXHR.getResponseHeader("location"), new URL(window.location)).searchParams.get("board");
