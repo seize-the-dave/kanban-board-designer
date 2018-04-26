@@ -272,80 +272,6 @@ var swapColumn = function(swimlane, from, to) {
   save(window.board);
 }
 
-var makeColumnHeaders = function(tableHeader, pivot, swimlane) {
-  for (var i = 0; i < pivot.length; i++) {
-      var row = pivot[i];
-      var tableHeaderRow = $('<tr>').appendTo(tableHeader);
-      var nonEmptyCols = row.filter(column => column.name !== undefined).length;
-      for (var j = 0; j < row.length; j++) {
-        var column = row[j];
-        tableHeaderRow.append(makeColumnHeader(column, nonEmptyCols, swimlane));
-      }
-  }
-}
-
-var augment = function(container, indices) {
-  if (container.columns === undefined) {
-    return;
-  }
-  var span = 0;
-  for (var i = 0; i < container.columns.length; i++) {
-    var indicesClone = indices.slice(0);
-    indicesClone.push(i);
-    var column = container.columns[i];
-    if (column.columns === undefined) {
-      column.span = 1;
-    } else {
-      augment(column, indicesClone);
-      column.span = column.columns.reduce((accum, curr) => accum + curr.span, 0);
-    }
-    column.indices = indicesClone;
-  }
-}
-
-var findDepth = function(container) {
-  var depth = 1;
-  if (container.columns === undefined) {
-    return depth;
-  }
-  for (var i = 0; i < container.columns.length; i++) {
-    var colDepth = 1;
-    var column = container.columns[i];
-    if (column.columns !== undefined) {
-      colDepth += findDepth(column);
-    }
-    depth = Math.max(depth, colDepth);
-  }
-  return depth;
-}
-
-var fillIn = function(pivot, columns, offset) {
-  if (columns === undefined) {
-    return;
-  }
-  for (var i = 0; i < columns.length; i++) {
-    var column = columns[i];
-    pivot[offset].push(column);
-    if (column.columns === undefined) {
-      for (var j = offset + 1; j < pivot.length; j++) {
-        pivot[j].push({span: 1});
-      }
-    } else {
-      fillIn(pivot, column.columns, offset + 1);
-    }
-  }
-}
-
-var collectWipLimits = function(container, limits) {
-  if (container.columns === undefined) {
-    return limits.push(Number(container.maxWip));
-  } else {
-    for (var i = 0; i < container.columns.length; i++) {
-      collectWipLimits(container.columns[i], limits);
-    }
-  }
-}
-
 var calculateColumnWidth = function(column) {
   var columnWidth = 1;
   column.swimlanes.forEach(function(swimlane) {
@@ -588,22 +514,6 @@ var render = function(board) {
   });
 }
 
-var makeColumnHeader = function(column, filledCols, swimlane) {
-  var tableHeader = $('<th colspan="' + column.span + '">');
-  if (column.indices) {
-    tableHeader.mouseout(function(e) {
-      hideButtons($(this));
-    });
-    tableHeader.mouseover(function(e) {
-      showButtons($(this));
-    });
-  }
-  if (column.name !== undefined) {
-    renderColumnName(tableHeader, column, filledCols, swimlane);
-  }
-  return tableHeader;
-}
-
 var findPosition = function(indices) {
   return indices.pop();
 }
@@ -624,93 +534,8 @@ var hideButtons = function(target) {
   target.find('div.btn-group').css('display', 'none');
 }
 
-var renderColumnName = function(headerCell, column, cols, swimlane) {
-  var indices = column.indices;
-  var thisOffset = findPosition(indices.slice(0));
-
-  var rightIndices = indices.slice(0);
-  rightIndices.pop();
-  rightIndices.push(thisOffset + 1);
-
-  var leftIndices = indices.slice(0);
-  leftIndices.pop();
-  leftIndices.push(thisOffset - 1);
-
-  var indicesString = JSON.stringify(indices);
-  var buttons_id = 'column_' + indices.join('_');
-  var titleDiv = $('<div>').appendTo(headerCell)
-  titleDiv.append(column.name + ' (' + column.maxWip + ')');
-
-  var buttons = $('<div class="buttons btn-group" id="' + buttons_id + '">').appendTo(headerCell);
-
-  var editButton = makeButton('Edit Column', 'fa-edit');
-  editButton.click([swimlane, indices], function(e) {
-    editColumn(e.data[0], e.data[1]);
-  })
-  buttons.append(editButton);
-
-  var addButton = makeButton('Add Column', 'fa-plus');
-  addButton.click([swimlane, rightIndices], function(e) {
-    addColumn(e.data[0], e.data[1]);
-  });
-  buttons.append(addButton);
-
-  var splitButton = makeButton('Split Column', 'fa-columns');
-  if (column.columns === undefined) {
-    splitButton.click(column, function(e) {
-      splitColumn(e.data, 2);
-    });
-  } else {
-    splitButton.attr('disabled', 'disabled');
-  }
-  buttons.append(splitButton);
-
-  var deleteButton = makeButton('Delete Column', 'fa-trash-alt');
-  deleteButton.click([swimlane, indices], function(e) {
-    deleteColumn(e.data[0], e.data[1]);
-  })
-  buttons.append(deleteButton);
-
-  var moveLeftButton = makeButton('Move Left', 'fa-arrow-left');
-  if (thisOffset !== 0) {
-    moveLeftButton.click([swimlane, indices, leftIndices], function(e) {
-      swapColumn(e.data[0], e.data[1], e.data[2]);
-    });
-  } else {
-    moveLeftButton.attr('disabled', 'disabled');
-  }
-  buttons.append(moveLeftButton);
-
-  var moveRightButton = makeButton('Move Right', 'fa-arrow-right');
-  if (thisOffset < (cols - 1)) {
-    moveRightButton.click([swimlane, indices, rightIndices], function(e) {
-      swapColumn(e.data[0], e.data[1], e.data[2]);
-    });
-  } else {
-    moveRightButton.attr('disabled', 'disabled');
-  }
-  buttons.append(moveRightButton);
-}
-
 var makeButton = function(title, icon) {
   return $('<button class="btn btn-primary btn-sm" data-toggle="tooltip" title="' + title + '"><i class="fas ' + icon + '"></i></button>');
-}
-
-var makeCardColumn = function(wip, span) {
-  var lowerWip = Math.max(2, wip - 1);
-  var range = wip - lowerWip;
-
-  var tableBodyCell = $('<td colspan="' + span + '">');
-  var cardBoards = $('<div class="column-1">').appendTo(tableBodyCell);
-  var colours = ['yellow', 'yellow', 'yellow', 'blue', 'pink', 'orange', 'green'];
-
-  var cards = lowerWip + Math.floor(range * Math.random())
-  for (var i = 0; i < cards; i++) {
-    var randomColour = colours[Math.floor(colours.length * Math.random())];
-    cardBoards.append('<div class="card card-' + randomColour + '">');
-  }
-
-  return tableBodyCell;
 }
 
 var save = function(board) {
