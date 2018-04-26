@@ -207,19 +207,30 @@ var calculateSwimlaneWidth = function(container) {
 }
 
 var calculateSwimlaneDepth = function(swimlane) {
-  var swimlaneDepth = 1;
-  swimlane.columns.forEach(function(column) {
-    swimlaneDepth = Math.max(swimlaneDepth, calculateColumnDepth(column));
-  });
+  var swimlaneDepth = 0;
+  if (swimlane.name !== undefined) {
+    swimlaneDepth++;
+  }
+  if (swimlane.columns.length == 0) {
+    return swimlaneDepth + 1;
+  } else {
+    var columnDepth = 1;
+    swimlane.columns.forEach(function(column) {
+      columnDepth = Math.max(columnDepth, calculateColumnDepth(column));
+    });
+    swimlaneDepth += columnDepth;
+  }
 
   return swimlaneDepth;
 }
 
 var calculateColumnDepth = function(column) {
-  var columnDepth = 2;
+  var columnDepth = 1;
+
   column.swimlanes.forEach(function(swimlane) {
     columnDepth += calculateSwimlaneDepth(swimlane);
   });
+
   return columnDepth;
 }
 
@@ -284,7 +295,8 @@ var renderColumn = function(wrapper) {
 
   var deleteButton = makeButton('Delete Column', 'fa-trash-alt');
   deleteButton.click(function(e) {
-    delete wrapper.parent.columns[wrapper.parent.columns.indexOf(wrapper.payload)];
+    wrapper.parent.columns.splice(wrapper.parent.columns.indexOf(wrapper.payload), 1);
+
     save(window.board);
   })
   columnButtons.append(deleteButton);
@@ -360,23 +372,38 @@ var renderSwimlane = function(wrapper) {
   swimlaneButtons.append(editButton);
 
   var addButton = makeButton('Add Swimlane', 'fa-plus');
-  // addButton.click([i + 1, swimlane.columns], function(e) {
-  //   addSwimlane(e.data[0], e.data[1]);
-  // });
+  addButton.click(function(e) {
+    var modal = $('#swimlaneModal');
+    modal.modal('toggle');
+    modal.find('.modal-body input#swimlane-name').val('New Swimlane');
+    modal.find('.modal-body input#swimlane-wip').val(2);
+
+    modal.find('form').submit(function(e) {
+      var swimlane = {name: 'New Swimlane', wip: 2};
+      swimlane.name = $('#swimlane-name').val();
+      swimlane.wip = $('#swimlane-wip').val();
+      swimlane.columns = wrapper.payload.columns;
+      modal.modal('toggle');
+
+      var offset = wrapper.parent.swimlanes.indexOf(wrapper.payload);
+      wrapper.parent.swimlanes.splice(offset, 0, JSON.parse(JSON.stringify(swimlane)));
+      save(window.board);
+
+      e.preventDefault();
+      modal.find('form').off();
+    });
+  });
   swimlaneButtons.append(addButton);
 
   var deleteButton = makeButton('Delete Swimlane', 'fa-trash-alt');
-  deleteButton.click(function(e) {
-    delete wrapper.parent.swimlanes[wrapper.parent.swimlanes.indexOf(wrapper.payload)];
-    save(window.board);
-  })
-  // if (swimlanes.length > 1) {
-  //   deleteButton.click(i, function(e) {
-  //     delSwimlane(e.data);
-  //   })
-  // } else {
-  //   deleteButton.attr('disabled', 'disabled');
-  // }
+  if (wrapper.parent.swimlanes.length > 1) {
+    deleteButton.click(function(e) {
+      wrapper.parent.swimlanes.splice(wrapper.parent.swimlanes.indexOf(wrapper.payload), 1);
+      save(window.board);
+    });
+  } else {
+    deleteButton.attr('disabled', 'disabled');
+  }
   swimlaneButtons.append(deleteButton);
 
   var moveUpButton = makeButton('Move Swimlane Up', 'fa-arrow-up');
@@ -406,7 +433,7 @@ var renderSwimlane = function(wrapper) {
 var columnToGrid = function(column, grid, offset, colDepth) {
   column.swimlanes.forEach(function(swimlane) {
     grid[offset].push(wrap(swimlane, column, Math.max(1, calculateSwimlaneWidth(swimlane))));
-    swimlaneToGrid(swimlane, grid, offset + 1, colDepth, column.maxWip);
+    offset += (swimlaneToGrid(swimlane, grid, offset + 1, colDepth, column.maxWip) + 1);
   });
 }
 
@@ -419,10 +446,15 @@ var swimlaneToGrid = function(swimlane, grid, offset, colDepth, colWip) {
     swimlane.columns.forEach(function(column) {
       var colDepth = (longestColumn - calculateColumnDepth(column)) + 1;
       grid[offset].push(wrap(column, swimlane, calculateColumnWidth(column)));
+
       columnToGrid(column, grid, offset + 1, colDepth);
     });
+
+    return longestColumn;
   } else {
     grid[offset].push(wrap({name: 'Cards', wip: colWip}, {}, 1, colDepth));
+
+    return 1;
   }
 }
 
@@ -441,7 +473,6 @@ var render = function(board) {
   var swimlanes = board.columns;
   var boardWidth = calculateSwimlaneWidth(board);
   var boardDepth = calculateSwimlaneDepth(board, 0);
-  console.log(boardWidth + 'x' + boardDepth);
 
   var grid = Array(boardDepth).fill(null).map(x => []);
   swimlaneToGrid(board, grid, 0);
