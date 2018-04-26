@@ -66,53 +66,8 @@ developmentColumn.addSwimlane(developmentSwimlane);
 developmentSwimlane.addColumn(new Column('In Progress', 3, [new Swimlane('Default', 1)]));
 developmentSwimlane.addColumn(new Column('Done', 2, [new Swimlane('Default', 1)]));
 
-// var board = {
-//   "board": {
-//     "swimlanes": [
-//       {
-//         name: "Expedite",
-//         wip: 1,
-//         "columns": [
-//           {name: "Backlog", maxWip: 1},
-//           {name: "Ready", maxWip: 3},
-//           {name: "Development", maxWip: 5, "columns": [
-//             {name: "In Progress", maxWip: 3},
-//             {name: "Done", maxWip: 2},
-//           ]},
-//           {name: "Validation", maxWip: 4},
-//           {name: "Done", maxWip: 3}
-//         ],
-//       },
-//       {
-//         name: "Standard",
-//         wip: 4,
-//         "columns": [
-//           {name: "Backlog", maxWip: 1},
-//           {name: "Ready", maxWip: 3},
-//           {name: "Development", maxWip: 5, "columns": [
-//             {name: "In Progress", maxWip: 3},
-//             {name: "Done", maxWip: 2},
-//           ]},
-//           {name: "Validation", maxWip: 4},
-//           {name: "Done", maxWip: 3}
-//         ],
-//       }
-//     ]
-//   }
-// };
 var board = defaultBoard;
 var boardId;
-
-var deleteColumn = function(swimlane, indices) {
-  var offset = indices.pop();
-  var container = containerForIndices(swimlane, indices);
-  container.columns.splice(offset, 1);
-  if (container.columns.length === 0) {
-    delete container.columns;
-  }
-
-  save(window.board);
-}
 
 var addColumn = function(swimlane, indices) {
   var modal = $('#columnModal');
@@ -129,25 +84,6 @@ var addColumn = function(swimlane, indices) {
     var offset = indices.pop();
     var container = containerForIndices(swimlane, indices);
     container.columns.splice(offset, 0, column);
-    save(window.board);
-
-    e.preventDefault();
-    modal.find('form').off();
-  });
-}
-
-var editColumn = function(swimlane, indices) {
-  var container = containerForIndices(swimlane, indices);
-  var modal = $('#columnModal');
-  modal.modal('toggle');
-  modal.find('.modal-body input#column-name').val(container.name);
-  modal.find('.modal-body input#column-wip').val(container.maxWip);
-
-  modal.find('form').submit(function(e) {
-    container.name = $('#column-name').val();
-    container.maxWip = $('#column-wip').val();
-    modal.modal('toggle');
-
     save(window.board);
 
     e.preventDefault();
@@ -181,26 +117,6 @@ var addSwimlane = function(offset, columns) {
     modal.modal('toggle');
 
     window.board.board.swimlanes.splice(offset, 0, swimlane);
-    save(window.board);
-
-    e.preventDefault();
-    modal.find('form').off();
-  });
-}
-
-var editSwimlane = function(offset) {
-  var swimlane = window.board.board.swimlanes[offset];
-
-  var modal = $('#swimlaneModal');
-  modal.modal('toggle');
-  modal.find('.modal-body input#swimlane-name').val(swimlane.name);
-  modal.find('.modal-body input#swimlane-wip').val(swimlane.wip);
-
-  modal.find('form').submit(function(e) {
-    swimlane.name = $('#swimlane-name').val();
-    swimlane.wip = $('#swimlane-wip').val();
-    modal.modal('toggle');
-
     save(window.board);
 
     e.preventDefault();
@@ -321,9 +237,23 @@ var renderColumn = function(wrapper) {
   var columnButtons = $('<div class="buttons btn-group">');
 
   var editButton = makeButton('Edit Column', 'fa-edit');
-  // editButton.click([swimlane, indices], function(e) {
-  //   editColumn(e.data[0], e.data[1]);
-  // })
+  editButton.click(wrapper.payload, function() {
+    var modal = $('#columnModal');
+    modal.modal('toggle');
+    modal.find('.modal-body input#column-name').val(wrapper.payload.name);
+    modal.find('.modal-body input#column-wip').val(wrapper.payload.maxWip);
+
+    modal.find('form').submit(function(e) {
+      wrapper.payload.name = $('#column-name').val();
+      wrapper.payload.maxWip = $('#column-wip').val();
+      modal.modal('toggle');
+
+      save(window.board);
+
+      e.preventDefault();
+      modal.find('form').off();
+    });
+  });
   columnButtons.append(editButton);
 
   var addButton = makeButton('Add Column', 'fa-plus');
@@ -353,9 +283,10 @@ var renderColumn = function(wrapper) {
   columnButtons.append(splitSwimlaneButton);
 
   var deleteButton = makeButton('Delete Column', 'fa-trash-alt');
-  // deleteButton.click([swimlane, indices], function(e) {
-  //   deleteColumn(e.data[0], e.data[1]);
-  // })
+  deleteButton.click(function(e) {
+    delete wrapper.parent.columns[wrapper.parent.columns.indexOf(wrapper.payload)];
+    save(window.board);
+  })
   columnButtons.append(deleteButton);
 
   var moveLeftButton = makeButton('Move Left', 'fa-arrow-left');
@@ -409,9 +340,23 @@ var renderSwimlane = function(wrapper) {
   });
   var swimlaneButtons = $('<div class="btn-group buttons">');
   var editButton = makeButton('Edit Swimlane', 'fa-edit');
-  // editButton.click(i, function(e) {
-  //   editSwimlane(e.data);
-  // })
+  editButton.click(function(e) {
+    var modal = $('#swimlaneModal');
+    modal.modal('toggle');
+    modal.find('.modal-body input#swimlane-name').val(wrapper.payload.name);
+    modal.find('.modal-body input#swimlane-wip').val(wrapper.payload.wip);
+
+    modal.find('form').submit(function(e) {
+      wrapper.payload.name = $('#swimlane-name').val();
+      wrapper.payload.wip = $('#swimlane-wip').val();
+      modal.modal('toggle');
+
+      save(window.board);
+
+      e.preventDefault();
+      modal.find('form').off();
+    });
+  })
   swimlaneButtons.append(editButton);
 
   var addButton = makeButton('Add Swimlane', 'fa-plus');
@@ -456,7 +401,7 @@ var renderSwimlane = function(wrapper) {
 
 var columnToGrid = function(column, grid, offset, colDepth) {
   column.swimlanes.forEach(function(swimlane) {
-    grid[offset].push(wrap(swimlane, Math.max(1, calculateSwimlaneWidth(swimlane))));
+    grid[offset].push(wrap(swimlane, column, Math.max(1, calculateSwimlaneWidth(swimlane))));
     swimlaneToGrid(swimlane, grid, offset + 1, colDepth, column.maxWip);
   });
 }
@@ -469,17 +414,18 @@ var swimlaneToGrid = function(swimlane, grid, offset, colDepth, colWip) {
     });
     swimlane.columns.forEach(function(column) {
       var colDepth = (longestColumn - calculateColumnDepth(column)) + 1;
-      grid[offset].push(wrap(column, calculateColumnWidth(column)));
+      grid[offset].push(wrap(column, swimlane, calculateColumnWidth(column)));
       columnToGrid(column, grid, offset + 1, colDepth);
     });
   } else {
-    grid[offset].push(wrap({name: 'Cards', wip: colWip}, 1, colDepth));
+    grid[offset].push(wrap({name: 'Cards', wip: colWip}, {}, 1, colDepth));
   }
 }
 
-var wrap = function(payload, colspan, rowspan) {
+var wrap = function(payload, parent, colspan, rowspan) {
   return {
     payload: payload,
+    parent: parent,
     colspan: colspan,
     rowspan: rowspan
   }
