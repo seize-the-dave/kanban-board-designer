@@ -236,7 +236,13 @@ var calculateColumnDepth = function(column) {
 
 var renderColumn = function(wrapper) {
   var columnHtml = $('<td class="column">');
-  columnHtml.append(wrapper.payload.name + ' (' + wrapper.payload.maxWip + ')');
+  var title = wrapper.payload.name;
+  var offset = wrapper.parent.columns.indexOf(wrapper.payload);
+
+  if (wrapper.payload.maxWip !== 0) {
+    title += ' (' + wrapper.payload.maxWip + ')';
+  }
+  columnHtml.append(title);
   columnHtml.attr('colspan', wrapper.colspan);
   columnHtml.mouseout(function(e) {
     hideButtons($(this));
@@ -246,8 +252,10 @@ var renderColumn = function(wrapper) {
   });
 
   var columnButtons = $('<div class="buttons btn-group">');
+  columnHtml.append(columnButtons);
 
   var editButton = makeButton('Edit Column', 'fa-edit');
+  columnButtons.append(editButton);
   editButton.click(wrapper.payload, function() {
     var modal = $('#columnModal');
     modal.modal('toggle');
@@ -265,62 +273,77 @@ var renderColumn = function(wrapper) {
       modal.find('form').off();
     });
   });
-  columnButtons.append(editButton);
 
   var addButton = makeButton('Add Column', 'fa-plus');
-  // addButton.click([swimlane, rightIndices], function(e) {
-  //   addColumn(e.data[0], e.data[1]);
-  // });
   columnButtons.append(addButton);
+  addButton.click(function(e) {
+    var swimlanes = JSON.parse(JSON.stringify(wrapper.payload.swimlanes));
+    var column = new Column('New Column', 1, swimlanes);
+
+    wrapper.parent.columns.splice(offset, 0, column);
+    save(window.board);
+  });
 
   var splitColumnButton = makeButton('Split Column', 'fa-columns');
-  // if (column.columns === undefined) {
-  //   splitButton.click(column, function(e) {
-  //     splitColumn(e.data, 2);
-  //   });
-  // } else {
-  //   splitButton.attr('disabled', 'disabled');
-  // }
   columnButtons.append(splitColumnButton);
+  if (wrapper.payload.swimlanes.length === 1 && wrapper.payload.swimlanes[0].columns.length === 0) {
+    splitColumnButton.click(wrapper.payload, function() {
+      var columns = [
+        new Column('New Column', 1, [new Swimlane('Default')]),
+        new Column('New Column', 1, [new Swimlane('Default')])
+      ];
+      wrapper.payload.swimlanes[0].columns = columns;
+
+      save(window.board);
+    });
+  } else {
+    splitColumnButton.addClass('disabled');
+  }
 
   var splitSwimlaneButton = makeButton('Split into Swimlanes', 'fa-bars');
-  // if (column.columns === undefined) {
-  //   splitButton.click(column, function(e) {
-  //     splitColumn(e.data, 2);
-  //   });
-  // } else {
-  //   splitButton.attr('disabled', 'disabled');
-  // }
-  columnButtons.append(splitSwimlaneButton);
+  // columnButtons.append(splitSwimlaneButton);
+  splitSwimlaneButton.click(function(e) {
+    window.alert('TODO');
+  });
 
   var deleteButton = makeButton('Delete Column', 'fa-trash-alt');
+  columnButtons.append(deleteButton);
   deleteButton.click(function(e) {
-    wrapper.parent.columns.splice(wrapper.parent.columns.indexOf(wrapper.payload), 1);
+    wrapper.parent.columns.splice(offset, 1);
 
     save(window.board);
   })
-  columnButtons.append(deleteButton);
 
   var moveLeftButton = makeButton('Move Left', 'fa-arrow-left');
-  // if (thisOffset !== 0) {
-  //   moveLeftButton.click([swimlane, indices, leftIndices], function(e) {
-  //     swapColumn(e.data[0], e.data[1], e.data[2]);
-  //   });
-  // } else {
-  //   moveLeftButton.attr('disabled', 'disabled');
-  // }
   columnButtons.append(moveLeftButton);
+  if (offset > 0) {
+    console.log(offset);
+    moveLeftButton.click(function(e) {
+      var leftOffset = offset - 1;
+      var swap = wrapper.parent.columns[leftOffset];
+      wrapper.parent.columns[leftOffset] = wrapper.payload;
+      wrapper.parent.columns[offset] = swap;
+
+      save(window.board);
+    });
+  } else {
+    moveLeftButton.addClass('disabled');
+  }
 
   var moveRightButton = makeButton('Move Right', 'fa-arrow-right');
-  // if (thisOffset < (cols - 1)) {
-  //   moveRightButton.click([swimlane, indices, rightIndices], function(e) {
-  //     swapColumn(e.data[0], e.data[1], e.data[2]);
-  //   });
-  // } else {
-  //   moveRightButton.attr('disabled', 'disabled');
-  // }
   columnButtons.append(moveRightButton);
-  columnHtml.append(columnButtons);
+  if (offset < wrapper.parent.columns.length - 1) {
+    moveRightButton.click(function(e) {
+      var rightOffset = offset + 1;
+      var swap = wrapper.parent.columns[rightOffset];
+      wrapper.parent.columns[rightOffset] = wrapper.payload;
+      wrapper.parent.columns[offset] = swap;
+
+      save(window.board);
+    });
+  } else {
+    moveRightButton.addClass('disabled');
+  }
 
   return columnHtml;
 }
@@ -341,6 +364,8 @@ var renderCards = function(wrapper) {
 }
 
 var renderSwimlane = function(wrapper) {
+  var offset = wrapper.parent.swimlanes.indexOf(wrapper.payload);
+
   var swimlaneHtml = $('<td class="swimlane">');
   swimlaneHtml.append(wrapper.payload.name);
   swimlaneHtml.attr('colspan', wrapper.colspan);
@@ -350,8 +375,12 @@ var renderSwimlane = function(wrapper) {
   swimlaneHtml.mouseover(function(e) {
     showButtons($(this));
   });
+
   var swimlaneButtons = $('<div class="btn-group buttons">');
+  swimlaneHtml.append(swimlaneButtons);
+
   var editButton = makeButton('Edit Swimlane', 'fa-edit');
+  swimlaneButtons.append(editButton);
   editButton.click(function(e) {
     var modal = $('#swimlaneModal');
     modal.modal('toggle');
@@ -369,9 +398,9 @@ var renderSwimlane = function(wrapper) {
       modal.find('form').off();
     });
   })
-  swimlaneButtons.append(editButton);
 
   var addButton = makeButton('Add Swimlane', 'fa-plus');
+  swimlaneButtons.append(addButton);
   addButton.click(function(e) {
     var modal = $('#swimlaneModal');
     modal.modal('toggle');
@@ -385,7 +414,6 @@ var renderSwimlane = function(wrapper) {
       swimlane.columns = wrapper.payload.columns;
       modal.modal('toggle');
 
-      var offset = wrapper.parent.swimlanes.indexOf(wrapper.payload);
       wrapper.parent.swimlanes.splice(offset, 0, JSON.parse(JSON.stringify(swimlane)));
       save(window.board);
 
@@ -393,39 +421,48 @@ var renderSwimlane = function(wrapper) {
       modal.find('form').off();
     });
   });
-  swimlaneButtons.append(addButton);
 
   var deleteButton = makeButton('Delete Swimlane', 'fa-trash-alt');
+  swimlaneButtons.append(deleteButton);
   if (wrapper.parent.swimlanes.length > 1) {
     deleteButton.click(function(e) {
-      wrapper.parent.swimlanes.splice(wrapper.parent.swimlanes.indexOf(wrapper.payload), 1);
+      wrapper.parent.swimlanes.splice(offset, 1);
+
       save(window.board);
     });
   } else {
-    deleteButton.attr('disabled', 'disabled');
+    deleteButton.addClass('disabled');
   }
-  swimlaneButtons.append(deleteButton);
 
   var moveUpButton = makeButton('Move Swimlane Up', 'fa-arrow-up');
-  // if (i !== 0) {
-  //   moveUpButton.click(i, function(e) {
-  //     swapSwimlanes(e.data, e.data - 1);
-  //   })
-  // } else {
-  //   moveUpButton.attr('disabled', 'disabled');
-  // }
   swimlaneButtons.append(moveUpButton);
+  if (offset !== 0) {
+    moveUpButton.click(function(e) {
+      var upOffset = offset - 1;
+      var swap = wrapper.parent.swimlanes[upOffset];
+      wrapper.parent.swimlanes[upOffset] = wrapper.payload;
+      wrapper.parent.swimlanes[offset] = swap;
+
+      save(window.board);
+    });
+  } else {
+    moveUpButton.addClass('disabled');
+  }
 
   var moveDownButton = makeButton('Move Swimlane Down', 'fa-arrow-down');
-  // if (i < swimlanes.length - 1) {
-  //   moveDownButton.click(i, function(e) {
-  //     swapSwimlanes(e.data, e.data + 1);
-  //   });
-  // } else {
-  //   moveDownButton.attr('disabled', 'disabled');
-  // }
   swimlaneButtons.append(moveDownButton);
-  swimlaneHtml.append(swimlaneButtons);
+  if (offset < wrapper.parent.swimlanes.length - 1) {
+    moveDownButton.click(function(e) {
+      var downOffset = offset + 1;
+      var swap = wrapper.parent.swimlanes[downOffset];
+      wrapper.parent.swimlanes[downOffset] = wrapper.payload;
+      wrapper.parent.swimlanes[offset] = swap;
+
+      save(window.board);
+    });
+  } else {
+    moveDownButton.addClass('disabled');
+  }
 
   return swimlaneHtml;
 }
@@ -522,7 +559,7 @@ var makeButton = function(title, icon) {
 var save = function(board) {
   $.ajax({
     type: "PUT",
-    url: lambdaUrl + "?board=" + board.id,
+    url: lambdaUrl + "?board=" + window.boardId,
     data: JSON.stringify({"board": board}),
     dataType: 'text',
   }).done(function() {
