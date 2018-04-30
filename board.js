@@ -63,6 +63,20 @@ Swimlane.prototype.addAfter = function(currColumn, nextColumn) {
   var offset = this.columns.indexOf(currColumn);
   this.columns.splice(offset, 0, nextColumn);
 }
+Swimlane.prototype.moveLeft = function(column) {
+  var offset = this.columns.indexOf(column);
+  var leftOffset = offset - 1;
+  var swap = this.columns[leftOffset];
+  this.columns[leftOffset] = column;
+  this.columns[offset] = swap;
+}
+Swimlane.prototype.moveRight = function(column) {
+  var offset = this.columns.indexOf(column);
+  var rightOffset = offset + 1;
+  var swap = this.columns[rightOffset];
+  this.columns[rightOffset] = column;
+  this.columns[offset] = swap;
+}
 Swimlane.fromObject = function(o) {
   var s = new Swimlane(o.name, o.wip, []);
   o.columns.forEach(function(c) {
@@ -218,10 +232,7 @@ var renderColumn = function(wrapper) {
   columnButtons.append(moveLeftButton);
   if (offset > 0) {
     moveLeftButton.click(function(e) {
-      var leftOffset = offset - 1;
-      var swap = wrapper.parent.columns[leftOffset];
-      wrapper.parent.columns[leftOffset] = wrapper.payload;
-      wrapper.parent.columns[offset] = swap;
+      wrapper.parent.moveLeft(wrapper.payload);
 
       save(window.board);
     });
@@ -233,10 +244,7 @@ var renderColumn = function(wrapper) {
   columnButtons.append(moveRightButton);
   if (offset < wrapper.parent.columns.length - 1) {
     moveRightButton.click(function(e) {
-      var rightOffset = offset + 1;
-      var swap = wrapper.parent.columns[rightOffset];
-      wrapper.parent.columns[rightOffset] = wrapper.payload;
-      wrapper.parent.columns[offset] = swap;
+      wrapper.parent.moveRight(wrapper.payload);
 
       save(window.board);
     });
