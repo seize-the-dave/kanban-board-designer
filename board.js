@@ -25,6 +25,20 @@ Column.prototype.addSwimlane = function(swimlane) {
 Column.prototype.removeSwimlane = function(swimlane) {
   this.swimlanes.splice(this.swimlanes.indexOf(swimlane), 1);
 }
+Column.prototype.moveUp = function(swimlane) {
+  var offset = this.swimlanes.indexOf(swimlane);
+  var upOffset = offset - 1;
+  var swap = this.swimlanes[upOffset];
+  this.swimlanes[upOffset] = swimlane;
+  this.swimlanes[offset] = swap;
+}
+Column.prototype.moveDown = function(swimlane) {
+  var offset = this.swimlanes.indexOf(swimlane);
+  var downOffset = offset + 1;
+  var swap = this.swimlanes[downOffset];
+  this.swimlanes[downOffset] = swimlane;
+  this.swimlanes[offset] = swap;
+}
 Column.prototype.clone = function() {
   var clone = new Column(this.name, this.maxWip, []);
   this.swimlanes.forEach(function(swimlane) {
@@ -342,10 +356,7 @@ var renderSwimlane = function(wrapper) {
   swimlaneButtons.append(moveUpButton);
   if (offset !== 0) {
     moveUpButton.click(function(e) {
-      var upOffset = offset - 1;
-      var swap = wrapper.parent.swimlanes[upOffset];
-      wrapper.parent.swimlanes[upOffset] = wrapper.payload;
-      wrapper.parent.swimlanes[offset] = swap;
+      wrapper.parent.moveUp(wrapper.payload);
 
       save(window.board);
     });
@@ -357,10 +368,7 @@ var renderSwimlane = function(wrapper) {
   swimlaneButtons.append(moveDownButton);
   if (offset < wrapper.parent.swimlanes.length - 1) {
     moveDownButton.click(function(e) {
-      var downOffset = offset + 1;
-      var swap = wrapper.parent.swimlanes[downOffset];
-      wrapper.parent.swimlanes[downOffset] = wrapper.payload;
-      wrapper.parent.swimlanes[offset] = swap;
+      wrapper.parent.moveDown(wrapper.payload);
 
       save(window.board);
     });
