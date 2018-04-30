@@ -22,6 +22,13 @@ function Column(name, maxWip, swimlanes) {
 Column.prototype.addSwimlane = function(swimlane) {
   this.swimlanes.push(swimlane);
 }
+Column.prototype.clone = function() {
+  var clone = new Column(this.name, this.maxWip, []);
+  this.swimlanes.forEach(function(swimlane) {
+    clone.addSwimlane(swimlane.clone());
+  });
+  return clone;
+}
 Column.fromObject = function(o) {
   var c = new Column(o.name, o.maxWip, []);
   o.swimlanes.forEach(function(s) {
@@ -37,6 +44,13 @@ function Swimlane(name, wip, columns) {
 }
 Swimlane.prototype.addColumn = function(column) {
   this.columns.push(column);
+}
+Swimlane.prototype.clone = function() {
+  var clone = new Swimlane(this.name, this.wip, []);
+  this.columns.forEach(function(column) {
+    clone.addColumn(column.clone());
+  });
+  return clone;
 }
 Swimlane.fromObject = function(o) {
   var s = new Swimlane(o.name, o.wip, []);
@@ -158,8 +172,9 @@ var renderColumn = function(wrapper) {
   var addButton = makeButton('Add Column', 'fa-plus');
   columnButtons.append(addButton);
   addButton.click(function(e) {
-    var swimlanes = JSON.parse(JSON.stringify(wrapper.payload.swimlanes));
-    var column = new Column('New Column', 1, swimlanes);
+    var column = wrapper.payload.clone();
+    // var swimlanes = JSON.parse(JSON.stringify(wrapper.payload.swimlanes));
+    // var column = new Column('New Column', 1, swimlanes);
 
     wrapper.parent.columns.splice(offset, 0, column);
     save(window.board);
@@ -198,7 +213,6 @@ var renderColumn = function(wrapper) {
   var moveLeftButton = makeButton('Move Left', 'fa-arrow-left');
   columnButtons.append(moveLeftButton);
   if (offset > 0) {
-    console.log(offset);
     moveLeftButton.click(function(e) {
       var leftOffset = offset - 1;
       var swap = wrapper.parent.columns[leftOffset];
@@ -454,7 +468,7 @@ var load = function(boardId) {
       url: lambdaUrl + "?board=" + boardId,
       dataType: 'json',
   }).done(function(data) {
-    window.board = data.board;
+    window.board = Board.fromObject(data.board);
     render(window.board);
   })
 }
