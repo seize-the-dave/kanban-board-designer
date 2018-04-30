@@ -29,6 +29,10 @@ Column.prototype.clone = function() {
   });
   return clone;
 }
+Column.prototype.splitColumn = function() {
+  this.swimlanes[0].addColumn(new Column('New Column', 1, [new Swimlane('Default')]));
+  this.swimlanes[0].addColumn(new Column('New Column', 1, [new Swimlane('Default')]));
+}
 Column.fromObject = function(o) {
   var c = new Column(o.name, o.maxWip, []);
   o.swimlanes.forEach(function(s) {
@@ -51,6 +55,10 @@ Swimlane.prototype.clone = function() {
     clone.addColumn(column.clone());
   });
   return clone;
+}
+Swimlane.prototype.addAfter = function(currColumn, nextColumn) {
+  var offset = this.columns.indexOf(currColumn);
+  this.columns.splice(offset, 0, nextColumn);
 }
 Swimlane.fromObject = function(o) {
   var s = new Swimlane(o.name, o.wip, []);
@@ -172,23 +180,16 @@ var renderColumn = function(wrapper) {
   var addButton = makeButton('Add Column', 'fa-plus');
   columnButtons.append(addButton);
   addButton.click(function(e) {
-    var column = wrapper.payload.clone();
-    // var swimlanes = JSON.parse(JSON.stringify(wrapper.payload.swimlanes));
-    // var column = new Column('New Column', 1, swimlanes);
+    wrapper.parent.addAfter(wrapper.payload, wrapper.payload.clone());
 
-    wrapper.parent.columns.splice(offset, 0, column);
     save(window.board);
   });
 
   var splitColumnButton = makeButton('Split Column', 'fa-columns');
   columnButtons.append(splitColumnButton);
   if (wrapper.payload.swimlanes.length === 1 && wrapper.payload.swimlanes[0].columns.length === 0) {
-    splitColumnButton.click(wrapper.payload, function() {
-      var columns = [
-        new Column('New Column', 1, [new Swimlane('Default')]),
-        new Column('New Column', 1, [new Swimlane('Default')])
-      ];
-      wrapper.payload.swimlanes[0].columns = columns;
+    splitColumnButton.click(function() {
+      wrapper.payload.splitColumn();
 
       save(window.board);
     });
