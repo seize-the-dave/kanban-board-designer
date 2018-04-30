@@ -33,6 +33,10 @@ Column.prototype.splitColumn = function() {
   this.swimlanes[0].addColumn(new Column('New Column', 1, [new Swimlane('Default')]));
   this.swimlanes[0].addColumn(new Column('New Column', 1, [new Swimlane('Default')]));
 }
+Column.prototype.addAfter = function(currSwimlane, nextSwimlane) {
+  var offset = this.swimlanes.indexOf(currSwimlane);
+  this.swimlanes.splice(offset + 1, 0, nextSwimlane);
+}
 Column.fromObject = function(o) {
   var c = new Column(o.name, o.maxWip, []);
   o.swimlanes.forEach(function(s) {
@@ -61,7 +65,7 @@ Swimlane.prototype.clone = function() {
 }
 Swimlane.prototype.addAfter = function(currColumn, nextColumn) {
   var offset = this.columns.indexOf(currColumn);
-  this.columns.splice(offset, 0, nextColumn);
+  this.columns.splice(offset + 1, 0, nextColumn);
 }
 Swimlane.prototype.moveLeft = function(column) {
   var offset = this.columns.indexOf(column);
@@ -197,7 +201,9 @@ var renderColumn = function(wrapper) {
   var addButton = makeButton('Add Column', 'fa-plus');
   columnButtons.append(addButton);
   addButton.click(function(e) {
-    wrapper.parent.addAfter(wrapper.payload, wrapper.payload.clone());
+    var column = wrapper.payload.clone();
+    column.name = 'New Column';
+    wrapper.parent.addAfter(wrapper.payload, column);
 
     save(window.board);
   });
@@ -309,24 +315,12 @@ var renderSwimlane = function(wrapper) {
   var addButton = makeButton('Add Swimlane', 'fa-plus');
   swimlaneButtons.append(addButton);
   addButton.click(function(e) {
-    var modal = $('#swimlaneModal');
-    modal.modal('toggle');
-    modal.find('.modal-body input#swimlane-name').val('New Swimlane');
-    modal.find('.modal-body input#swimlane-wip').val(2);
+    var swimlane = wrapper.payload.clone();
+    swimlane.name = 'New Swimlane';
 
-    modal.find('form').submit(function(e) {
-      var swimlane = {name: 'New Swimlane', wip: 2};
-      swimlane.name = $('#swimlane-name').val();
-      swimlane.wip = $('#swimlane-wip').val();
-      swimlane.columns = wrapper.payload.columns;
-      modal.modal('toggle');
+    wrapper.parent.addAfter(wrapper.payload, swimlane);
 
-      wrapper.parent.swimlanes.splice(offset, 0, JSON.parse(JSON.stringify(swimlane)));
-      save(window.board);
-
-      e.preventDefault();
-      modal.find('form').off();
-    });
+    save(window.board);
   });
 
   var deleteButton = makeButton('Delete Swimlane', 'fa-trash-alt');
