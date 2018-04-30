@@ -22,6 +22,9 @@ function Column(name, maxWip, swimlanes) {
 Column.prototype.addSwimlane = function(swimlane) {
   this.swimlanes.push(swimlane);
 }
+Column.prototype.removeSwimlane = function(swimlane) {
+  this.swimlanes.splice(this.swimlanes.indexOf(swimlane), 1);
+}
 Column.prototype.clone = function() {
   var clone = new Column(this.name, this.maxWip, []);
   this.swimlanes.forEach(function(swimlane) {
@@ -327,7 +330,7 @@ var renderSwimlane = function(wrapper) {
   swimlaneButtons.append(deleteButton);
   if (wrapper.parent.swimlanes.length > 1) {
     deleteButton.click(function(e) {
-      wrapper.parent.swimlanes.splice(offset, 1);
+      wrapper.parent.removeSwimlane(wrapper.payload);
 
       save(window.board);
     });
