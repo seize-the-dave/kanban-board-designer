@@ -334,7 +334,6 @@ var renderSwimlane = function(wrapper) {
   addButton.click(function(e) {
     var swimlane = wrapper.payload.clone();
     swimlane.name = 'New Swimlane';
-
     wrapper.parent.addAfter(wrapper.payload, swimlane);
 
     save(window.board);
