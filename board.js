@@ -49,6 +49,9 @@ function Swimlane(name, wip, columns) {
 Swimlane.prototype.addColumn = function(column) {
   this.columns.push(column);
 }
+Swimlane.prototype.removeColumn = function(column) {
+  this.columns.splice(this.columns.indexOf(column), 1);
+}
 Swimlane.prototype.clone = function() {
   var clone = new Swimlane(this.name, this.wip, []);
   this.columns.forEach(function(column) {
@@ -206,7 +209,7 @@ var renderColumn = function(wrapper) {
   var deleteButton = makeButton('Delete Column', 'fa-trash-alt');
   columnButtons.append(deleteButton);
   deleteButton.click(function(e) {
-    wrapper.parent.columns.splice(offset, 1);
+    wrapper.parent.removeColumn(wrapper.payload);
 
     save(window.board);
   })
