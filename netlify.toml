@@ -1,3 +1,4 @@
 [build]
   base = "ui"
   publish = "ui"
+  build = "grunt"
