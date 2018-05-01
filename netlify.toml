@@ -1,3 +1,3 @@
 [build]
   base = "ui"
-  publish = "public"
+  publish = "ui"
