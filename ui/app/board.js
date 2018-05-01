@@ -6,14 +6,17 @@ define(['./column', './swimlane'], function(Column, Swimlane) {
   Board.prototype.addColumn = function(column) {
     this.columns.push(column);
   }
-  Board.prototype.addColumn = function(column) {
-    this.columns.push(column);
-  }
   Board.prototype.removeColumn = function(column) {
+    if (this.columns.indexOf(column) === -1) {
+      return;
+    }
     this.columns.splice(this.columns.indexOf(column), 1);
   }
   Board.prototype.addAfter = function(currColumn, nextColumn) {
     var offset = this.columns.indexOf(currColumn);
+    if (offset === -1) {
+      return;
+    }
     this.columns.splice(offset + 1, 0, nextColumn);
   }
   Board.prototype.moveLeft = function(column) {

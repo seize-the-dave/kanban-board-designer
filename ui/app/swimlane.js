@@ -8,6 +8,9 @@ define(['require', './column'], function(require, Column) {
     this.columns.push(column);
   }
   Swimlane.prototype.removeColumn = function(column) {
+    if (this.columns.indexOf(column) === -1) {
+      return;
+    }
     this.columns.splice(this.columns.indexOf(column), 1);
   }
   Swimlane.prototype.clone = function() {
@@ -19,6 +22,9 @@ define(['require', './column'], function(require, Column) {
   }
   Swimlane.prototype.addAfter = function(currColumn, nextColumn) {
     var offset = this.columns.indexOf(currColumn);
+    if (offset === -1) {
+      return;
+    }
     this.columns.splice(offset + 1, 0, nextColumn);
   }
   Swimlane.prototype.moveLeft = function(column) {
