@@ -1,5 +1,7 @@
 var lambdaUrl = "https://euq9lhwui2.execute-api.us-east-1.amazonaws.com/dev/board";
 
+const HIDE_SINGLE_SWIMLANES = true;
+
 function Board() {
   this.columns = [];
 }
@@ -49,6 +51,12 @@ Column.prototype.clone = function() {
 Column.prototype.splitColumn = function() {
   this.swimlanes[0].addColumn(new Column('New Column', 1, [new Swimlane('Default')]));
   this.swimlanes[0].addColumn(new Column('New Column', 1, [new Swimlane('Default')]));
+}
+Column.prototype.splitSwimlane = function() {
+  var swimlane = this.swimlanes[0].clone();
+  swimlane.name = 'New Swimlane';
+
+  this.addSwimlane(swimlane);
 }
 Column.prototype.addAfter = function(currSwimlane, nextSwimlane) {
   var offset = this.swimlanes.indexOf(currSwimlane);
@@ -172,6 +180,11 @@ var calculateColumnDepth = function(column) {
     columnDepth += calculateSwimlaneDepth(swimlane);
   });
 
+  // Don't render single swimlanes
+  if (HIDE_SINGLE_SWIMLANES && column.swimlanes.length === 1) {
+    columnDepth--;
+  }
+
   return columnDepth;
 }
 
@@ -238,10 +251,16 @@ var renderColumn = function(wrapper) {
   }
 
   var splitSwimlaneButton = makeButton('Split into Swimlanes', 'fa-bars');
-  // columnButtons.append(splitSwimlaneButton);
-  splitSwimlaneButton.click(function(e) {
-    window.alert('TODO');
-  });
+  columnButtons.append(splitSwimlaneButton);
+  if (wrapper.payload.swimlanes.length === 1) {
+    splitSwimlaneButton.click(function(e) {
+      wrapper.payload.splitSwimlane();
+
+      save(window.board);
+    });
+  } else {
+    splitSwimlaneButton.addClass('disabled');
+  }
 
   var deleteButton = makeButton('Delete Column', 'fa-trash-alt');
   columnButtons.append(deleteButton);
@@ -379,10 +398,14 @@ var renderSwimlane = function(wrapper) {
 }
 
 var columnToGrid = function(column, grid, offset, colDepth) {
-  column.swimlanes.forEach(function(swimlane) {
-    grid[offset].push(wrap(swimlane, column, Math.max(1, calculateSwimlaneWidth(swimlane))));
-    offset += (swimlaneToGrid(swimlane, grid, offset + 1, colDepth, column.maxWip) + 1);
-  });
+  if (HIDE_SINGLE_SWIMLANES && column.swimlanes.length === 1) {
+    swimlaneToGrid(column.swimlanes[0], grid, offset, colDepth, column.maxWip);
+  } else {
+    column.swimlanes.forEach(function(swimlane) {
+      grid[offset].push(wrap(swimlane, column, Math.max(1, calculateSwimlaneWidth(swimlane))));
+      offset += (swimlaneToGrid(swimlane, grid, offset + 1, colDepth, column.maxWip) + 1);
+    });
+  }
 }
 
 var swimlaneToGrid = function(swimlane, grid, offset, colDepth, colWip) {
@@ -441,10 +464,6 @@ var render = function(board) {
       }
     });
   });
-}
-
-var findPosition = function(indices) {
-  return indices.pop();
 }
 
 var toggle = function(id) {
