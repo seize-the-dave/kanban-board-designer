@@ -1,11 +1,11 @@
-define(['require', './renderer', './board'], function(require, Renderer, Board) {
+define(['require', './board'], function(require, Board) {
   const LAMBDA_URL = "https://euq9lhwui2.execute-api.us-east-1.amazonaws.com/dev/board";
 
-  var Repository = function(renderer) {
-    this.renderer = renderer;
+  var Repository = function() {
   }
 
   Repository.prototype.save = function(board, callback) {
+    console.log(board);
     $.ajax({
       type: "PUT",
       url: LAMBDA_URL + "?board=" + board.id,
