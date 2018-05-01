@@ -1,0 +1,26 @@
+{
+  "name": "kanban-board-designer",
+  "version": "1.0.0",
+  "description": "Kanban Board Designer",
+  "main": "app.js",
+  "devDependencies": {
+    "grunt": "^1.0.2",
+    "grunt-contrib-jshint": "^1.1.0",
+    "grunt-mocha-test": "^0.13.3",
+    "mocha": "^5.1.1",
+    "requirejs": "^2.3.5"
+  },
+  "scripts": {
+    "test": "mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/seize-the-dave/kanban-board-designer.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/seize-the-dave/kanban-board-designer/issues"
+  },
+  "homepage": "https://github.com/seize-the-dave/kanban-board-designer#readme"
+}
